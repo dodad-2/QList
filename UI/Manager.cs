@@ -25,7 +25,8 @@ internal static class Manager
     }
     internal static Dictionary<string, Image>? ExistingImagePrefabHash = new();
     private static GameObject? container, mainMenuOptions, ingameOptions, ingameLogo;
-    private static Button? mainMenuButton, pauseMenuButton, mainMenuBackButton, pauseMenuResumeButton;
+    private static Button? mainMenuModOptionsButton, pauseMenuButton, mainMenuBackButton, pauseMenuResumeButton;
+    private static Il2CppSilica.UI.PauseMenu? PauseMenuInstance;
     #endregion
 
     #region Init / Uninit
@@ -104,42 +105,98 @@ internal static class Manager
     #endregion
 
     #region Patches - UI
-    /*
-    [HarmonyPatch(typeof(Il2CppSilica.UI.MainMenu), nameof(Il2CppSilica.UI.MainMenu.Start))]
-    private static class MainMenu_Start
+
+    [HarmonyPatch(typeof(Il2CppSilica.UI.PauseMenu), nameof(Il2CppSilica.UI.PauseMenu.CloseScreen))]
+    private static class PauseMenu_CloseScreen
     {
-        private static void Postfix(Il2CppSilica.UI.MainMenu __instance)
+        private static void Postfix(Il2CppSilica.UI.PauseMenu __instance)
         {
+            OnClickCloseModOptionsMenu();
+            //Log.LogOutput($"PauseMenu_CloseScreen: Postfix {(__instance != null ? __instance.name : "null")}");
         }
     }
-    */
+    [HarmonyPatch(typeof(Il2CppSilica.UI.PauseMenu), nameof(Il2CppSilica.UI.PauseMenu.Toggle))]
+    private static class PauseMenu_Toggle
+    {
+        private static void Postfix(Il2CppSilica.UI.PauseMenu __instance)
+        {
+            PauseMenuInstance = __instance;
+            OnClickCloseModOptionsMenu();
+
+            //Log.LogOutput($"PauseMenu_Toggle: Postfix {(__instance != null ? __instance.name : "null")}");
+        }
+    }
+    [HarmonyPatch(typeof(Il2CppSilica.UI.MainMenu), nameof(Il2CppSilica.UI.MainMenu.CloseScreen))]
+    private static class MainMenu_CloseScreen
+    {
+        private static void Postfix(Il2CppSilica.UI.MenuScreenType type)
+        {
+            OnClickCloseModOptionsMenu();
+
+            //Log.LogOutput($"MainMenu_CloseScreen: Postfix {type}");
+        }
+    }
+    [HarmonyPatch(typeof(Il2CppSilica.UI.MainMenu), nameof(Il2CppSilica.UI.MainMenu.OpenScreen))]
+    private static class MainMenu_OpenScreen
+    {
+        private static void Postfix(Il2CppSilica.UI.MainMenu __instance, Il2CppSilica.UI.MenuScreenType type)
+        {
+            if (SceneManager.GetActiveScene().name.ToLower().Contains("menu") && type == Il2CppSilica.UI.MenuScreenType.None)
+                __instance.OpenScreen(Il2CppSilica.UI.MenuScreenType.Intro);
+
+            //Log.LogOutput($"MainMenu_OpenScreen: Postfix {type}");
+        }
+    }
     [HarmonyPatch(typeof(Il2CppSilica.UI.UIManager), nameof(Il2CppSilica.UI.UIManager.Awake))]
     private static class UIManager_Awake
     {
         private static void Postfix(Il2CppSilica.UI.UIManager __instance)
         {
+            //Log.LogOutput($"UIManager_Awake: Postfix {(__instance != null ? __instance.name : "null")}");
+
             if (SceneManager.GetActiveScene().name.ToLower().Contains("menu"))
-                ModifyMainMenu(null); // Why pass null?
+                ModifyMainMenu();
             else if (!SceneManager.GetActiveScene().name.ToLower().Contains("intro"))
-                ModifyPauseMenu(null);
+                ModifyPauseMenu();
+
+            OnClickCloseModOptionsMenu();
         }
     }
     #endregion
 
     #region UI
-    public static void ToggleModOptionsMenu()
+    public static void SetModOptionsMenuEnabled(bool state)
+    {
+        if (Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main) && mainMenuOptions != null)
+        {
+            mainMenuOptions?.SetActive(!state);
+        }
+        else
+        {
+            if (PauseMenuInstance != null)
+            {
+                if (state)
+                    PauseMenuInstance.CloseScreen(PauseMenuInstance.currentScreen);
+                else
+                    PauseMenuInstance.OpenScreen(PauseMenuInstance.currentScreen);
+            }
+        }
+
+        if (state)
+            ModOptionsMenu.Open();
+        else
+            ModOptionsMenu.Close();
+    }
+    public static void ToggleModOptionsMenuEnabled()
     {
         if (ModOptionsMenu.Instance == null)
             return;
 
-        ModOptionsMenu.Toggle();
-
-        if (Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main))
-            SetMainMenuOptionsVisibility(!ModOptionsMenu.Instance.gameObject.activeSelf);
+        if (ModOptionsMenu.Instance.gameObject.activeSelf)
+            SetModOptionsMenuEnabled(false);
         else
-            SetIngameMenuOptionsVisibility(!ModOptionsMenu.Instance.gameObject.activeSelf);
+            SetModOptionsMenuEnabled(true);
     }
-
     private static void CreateModOptionsMenu()
     {
         if (Resources.Bundle == null)
@@ -164,144 +221,92 @@ internal static class Manager
         container = new GameObject("(QList) Manager Resources", Il2CppType.Of<RectTransform>());
         GameObject.DontDestroyOnLoad(container);
     }
-    private static void ModifyPauseMenu(Il2CppSilica.UI.Menu __instance)
+    private static void ModifyPauseMenu()
     {
-        // TODO rewrite both of these methods
+        var pauseMenu = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.PauseMenu>();
 
-        var search = Il2CppSilica.UI.MenuManager.Instance.GetComponentsInChildren<VerticalLayoutGroup>(true).Where(x => x.name.ToLower().Equals("menu"));
-
-        var pauseMenu = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.PauseMenu>(true);
-
-        ingameOptions = pauseMenu.GetComponentInChildren<Il2CppSilica.UI.OptionsForm>(true).gameObject;
-
-        var logoSearch = pauseMenu.GetComponentsInChildren<Image>(true).Where(x => x.name.Equals("Logo"));
-
-        if (logoSearch != null && logoSearch.Count() != 0)
+        if (pauseMenu != null)
         {
-            ingameLogo = logoSearch.First()?.gameObject;
+            ingameOptions = pauseMenu.Screens[0].gameObject;
+
+            ingameLogo = pauseMenu.GetComponentsInChildren<Image>(true).Where(x => x.name.Equals("Logo")).First()?.gameObject;
+
+            var resumeButtonTemplate = pauseMenu.GetComponentsInChildren<Button>(true).Where(x => x.name.ToLower().Equals("resume")).First().gameObject;
+
+            if (resumeButtonTemplate != null)
+            {
+                pauseMenuButton = GameObject.Instantiate(resumeButtonTemplate).GetComponent<Button>();
+
+                pauseMenuButton.transform.SetParent(ingameOptions.transform.parent.GetComponentInChildren<VerticalLayoutGroup>().transform);
+                pauseMenuButton.transform.SetSiblingIndex(2);
+
+                var modsButtonRect = pauseMenuButton.GetComponent<RectTransform>();
+
+                FormatButton(pauseMenuButton);
+            }
         }
-
-        if (search == null || search.Count() == 0)
-        {
-            Log.LogOutput($"Unable to create pause menu button: search is null or empty", Log.LogLevel.Error);
-            return;
-        }
-
-        var leftHandMenu = search.First();
-
-        if (leftHandMenu == null)
-        {
-            Log.LogOutput($"Unable to create pause menu button: leftHandMenu is null", Log.LogLevel.Error);
-            return;
-        }
-
-        var search2 = leftHandMenu.gameObject.GetComponentsInChildren<Button>(true).Where(x => x.name.ToLower().Equals("resume"));
-
-        if (search2 == null || search2.Count() == 0)
-        {
-            Log.LogOutput($"Unable to create pause menu button: search2 is null or empty", Log.LogLevel.Error);
-            return;
-        }
-
-        pauseMenuResumeButton = search2.First();
-
-        if (pauseMenuResumeButton == null)
-        {
-            Log.LogOutput($"Unable to create pause menu button: resumeButton is null", Log.LogLevel.Error);
-            return;
-        }
-
-        pauseMenuResumeButton.onClick.AddListener(new Action(OnClickBackButton));
-
-        var modOptionsButton = GameObject.Instantiate(pauseMenuResumeButton.gameObject).GetComponent<Button>();
-
-        if (modOptionsButton == null)
-        {
-            Log.LogOutput($"Unable to create pause menu button: modsButton is null", Log.LogLevel.Error);
-            return;
-        }
-        pauseMenuButton = modOptionsButton;
-
-        modOptionsButton.transform.SetParent(leftHandMenu.transform);
-        modOptionsButton.transform.SetSiblingIndex(2);
-
-        var modsButtonRect = modOptionsButton.GetComponent<RectTransform>();
-
-        FormatButton(modOptionsButton);
     }
-    private static void ModifyMainMenu(Il2CppSilica.UI.Menu __instance)
+    private static void ModifyMainMenu()
     {
-        var search = Il2CppSilica.UI.MenuManager.Instance.GetComponentsInChildren<Il2CppSilica.UI.MenuScreen>(true).Where(x => x.name.ToLower().Equals("options") && x.transform.parent.name.ToLower().Equals("main menu"));
+        var mainMenu = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.MainMenu>();
 
-        if (search == null || search.Count() == 0)
+        if (mainMenu != null)
         {
-            Log.LogOutput($"Unable to create main menu button: search is null or empty", Log.LogLevel.Error);
-            return;
+            GameObject? backButtonTemplate = null;
+
+            foreach (var optionsButton in mainMenu.OptionsButtons)
+            {
+                optionsButton.onClick.AddListener(new Action(OnClickCloseModOptionsMenu));
+            }
+
+            foreach (var backButton in mainMenu.BackToMainMenuButtons)
+            {
+                if (backButtonTemplate == null)
+                    backButtonTemplate = backButton.gameObject;
+
+                backButton.onClick.AddListener(new Action(OnClickCloseModOptionsMenu));
+            }
+
+            if (backButtonTemplate != null)
+            {
+                var modOptionsButtonObject = GameObject.Instantiate(backButtonTemplate.gameObject);
+
+                var modOptionsButton = modOptionsButtonObject.GetComponent<Button>();
+
+                if (modOptionsButton == null)
+                {
+                    Log.LogOutput($"Unable to create main menu button: modsButton is null", Log.LogLevel.Error);
+                    return;
+                }
+
+                var mainMenuOptionsSearch = mainMenu.GetComponentsInChildren<Il2CppSilica.UI.OptionsForm>(true).Where(x => x.name.ToLower().Equals("options"));
+
+                if (mainMenuOptionsSearch == null || mainMenuOptionsSearch.Count() == 0)
+                {
+                    Log.LogOutput($"Unable to find main menu OptionsForm", Log.LogLevel.Error);
+                    return;
+                }
+
+                mainMenuOptions = mainMenuOptionsSearch.First().gameObject;
+
+                modOptionsButton.transform.SetParent(mainMenuOptions.transform.parent);
+
+                var modsButtonRect = modOptionsButton.GetComponent<RectTransform>();
+                modsButtonRect.localPosition = new Vector3(modsButtonRect.localPosition.x, modsButtonRect.localPosition.y + 100f, 0);
+
+                FormatButton(modOptionsButton);
+
+                mainMenuModOptionsButton = modOptionsButton;
+            }
         }
-
-        var optionsMenu = search.First();
-
-        if (optionsMenu == null)
-        {
-            Log.LogOutput($"Unable to create main menu button: optionsMenu is null or empty", Log.LogLevel.Error);
-            return;
-        }
-
-        mainMenuOptions = optionsMenu.gameObject.GetComponentInChildren<Il2CppSilica.UI.OptionsForm>().gameObject;
-
-        var gearIconRotator = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.Effects.Rotator>();
-
-        if (gearIconRotator != null)
-        {
-            var gearButton = gearIconRotator.GetComponent<Button>();
-            gearButton.onClick.AddListener(new Action(OnClickBackButton));
-        }
-
-        var search2 = optionsMenu.gameObject.GetComponentsInChildren<Button>(true).Where(x => x.name.ToLower().Equals("back"));
-
-        if (search2 == null || search2.Count() == 0)
-        {
-            Log.LogOutput($"Unable to create main menu button: search2 is null or empty", Log.LogLevel.Error);
-            return;
-        }
-
-        mainMenuBackButton = search2.First();
-
-        if (mainMenuBackButton == null)
-        {
-            Log.LogOutput($"Unable to create main menu button: backButton is null or empty", Log.LogLevel.Error);
-            return;
-        }
-
-        mainMenuBackButton.onClick.AddListener(new Action(OnClickBackButton));
-
-        var modOptionsButton = GameObject.Instantiate(mainMenuBackButton.gameObject).GetComponent<Button>();
-
-        if (modOptionsButton == null)
-        {
-            Log.LogOutput($"Unable to create main menu button: modsButton is null", Log.LogLevel.Error);
-            return;
-        }
-
-        mainMenuButton = modOptionsButton;
-
-        modOptionsButton.transform.SetParent(optionsMenu.transform);
-
-        var modsButtonRect = modOptionsButton.GetComponent<RectTransform>();
-        modsButtonRect.localPosition = new Vector3(modsButtonRect.localPosition.x, modsButtonRect.localPosition.y + 100f, 0);
-
-        FormatButton(modOptionsButton);
     }
     #endregion
 
     #region Helpers
-    private static void OnClickBackButton()
+    private static void OnClickCloseModOptionsMenu()
     {
-        if (ModOptionsMenu.Instance == null)
-            return;
-
-        if (ModOptionsMenu.Instance.gameObject.activeSelf)
-            ToggleModOptionsMenu();
+        if (ModOptionsMenu.Instance != null && ModOptionsMenu.Instance.gameObject.activeSelf)
+            SetModOptionsMenuEnabled(false);
     }
     private static void SetMainMenuOptionsVisibility(bool state)
     {
@@ -317,7 +322,7 @@ internal static class Manager
         button.name = modButtonText;
         button.onClick.RemoveAllListeners();
         button.onClick.m_PersistentCalls.Clear();
-        button.onClick.AddListener(new Action(ToggleModOptionsMenu));
+        button.onClick.AddListener(new Action(ToggleModOptionsMenuEnabled));
         button.transform.localScale = Vector3.one;
 
         var textMesh = button.GetComponentInChildren<TextMeshProUGUI>();

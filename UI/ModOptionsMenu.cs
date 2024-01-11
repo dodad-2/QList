@@ -33,19 +33,18 @@ public class ModOptionsMenu : MonoBehaviour
     }
     private void Update()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
-            Manager.ToggleModOptionsMenu();
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape) && !Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main))
+            Manager.ToggleModOptionsMenuEnabled();
     }
     #endregion
 
     #region Static
-    public static void Open()
+    public static void Open() // TODO allow opening a mod's page
     {
-        Log.LogOutput("ModOptionsMenu.Open");
-        if (Instance == null)
+        if (Instance == null || Instance.gameObject.activeSelf)
             return;
 
-        Instance?.gameObject.SetActive(true);
+        Instance.gameObject.SetActive(true);
 
         if (Instance.cameraPosition == null)
         {
@@ -63,25 +62,13 @@ public class ModOptionsMenu : MonoBehaviour
     }
     public static void Close()
     {
-        Log.LogOutput("ModOptionsMenu.Close");
-        if (Instance == null)
+        if (Instance == null || !Instance.gameObject.activeSelf)
             return;
 
-        Instance?.gameObject.SetActive(false);
+        Instance.gameObject.SetActive(false);
 
         if (Instance.cameraPosition != null)
             Instance.cameraPosition.reposition = false;
-    }
-    public static void Toggle()
-    {
-        Log.LogOutput("ModOptionsMenu.Toggle");
-        if (Instance == null)
-            return;
-
-        if (Instance.gameObject.activeSelf)
-            Close();
-        else
-            Open();
     }
     #endregion
 

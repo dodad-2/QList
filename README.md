@@ -42,7 +42,6 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Known Issues
 
-- Ingame pause menu: The mod options menu doesn't close when switching to other menus
 - Slider step value doesn't work
 
 # Special thanks
@@ -52,6 +51,11 @@ Option types are located at `QList.OptionTypes`. Currently available:
 - The <a href="https://discord.gg/5SHQxFaess">Silica Modders Discord</a>
 
 # Changelog
+
+**0.0.2**
+
+- Fixed various UI issues
+- Fixed a bug in the game where sometimes the main menu would disappear
 
 **0.0.1**
 

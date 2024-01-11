@@ -242,7 +242,7 @@ public class OptionComponent : MonoBehaviour
     #endregion
 
     #region Option
-    public void SetOption(BaseOption option, TextMeshProUGUI? description = null)
+    public void SetOption(BaseOption? option, TextMeshProUGUI? description = null)
     {
         if (option == null || title == null)
             return;
