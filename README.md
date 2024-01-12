@@ -52,6 +52,10 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.0.3**
+
+- Fixed OptionType issues
+
 **0.0.2**
 
 - Fixed various UI issues
