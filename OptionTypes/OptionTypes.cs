@@ -340,7 +340,7 @@ public class ButtonOption : BaseOption
 
     public ButtonOption(string buttonName = "") : base(null)
     {
-        this.buttonName = defaultButtonName;
+        this.buttonName = (buttonName == null || buttonName.Length == 0) ? defaultButtonName : buttonName;
     }
 
     public virtual void Click()
