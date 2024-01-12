@@ -336,11 +336,11 @@ public class ButtonOption : BaseOption
         }
     }
 
-    protected string buttonName;
+    protected string buttonName = "";
 
     public ButtonOption(string buttonName = "") : base(null)
     {
-        this.buttonName = (buttonName == null || buttonName.Length == 0) ? defaultButtonName : buttonName;
+        ButtonName = buttonName;
     }
 
     public virtual void Click()
