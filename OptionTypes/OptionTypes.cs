@@ -79,14 +79,29 @@ public class IntOption : BaseOption
         {
             this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
             this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
-            this.currentValue = Convert.ToInt32(this.entry.BoxedValue);
+
+            try
+            {
+                this.currentValue = Convert.ToInt32(this.entry.BoxedValue);
+            }
+            catch (Exception e)
+            {
+                Log.LogOutput($"{this.GetType()}: Could not parse '{Name}': {e}", Log.LogLevel.Warning);
+            }
         }
     }
 
     public int GetValue()
     {
-        if (entry != null)
-            currentValue = (int)entry.BoxedValue;
+        try
+        {
+            if (entry != null)
+                currentValue = (int)entry.BoxedValue;
+        }
+        catch (Exception e)
+        {
+            Log.LogOutput($"{this.GetType()}.GetValue: Could not parse '{Name}': {e}", Log.LogLevel.Warning);
+        }
 
         return currentValue;
     }
@@ -103,10 +118,16 @@ public class IntOption : BaseOption
     }
     private void OnValueChanged(object oldValue, object newValue)
     {
-        int newInt = Convert.ToInt32(newValue);
-
-        this.currentValue = newInt;
-        this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        try
+        {
+            int newInt = Convert.ToInt32(newValue);
+            this.currentValue = newInt;
+            this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        }
+        catch (Exception e)
+        {
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}': {e}", Log.LogLevel.Warning);
+        }
     }
 }
 public class FloatOption : BaseOption
@@ -126,7 +147,15 @@ public class FloatOption : BaseOption
         {
             this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
             this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
-            this.currentValue = (float)this.entry.BoxedValue;
+
+            try
+            {
+                this.currentValue = (float)this.entry.BoxedValue;
+            }
+            catch (Exception e)
+            {
+                Log.LogOutput($"{this.GetType()}: Could not parse '{Name}': {e}", Log.LogLevel.Warning);
+            }
         }
     }
 
@@ -152,13 +181,14 @@ public class FloatOption : BaseOption
     {
         float newFloat;
 
-        float.TryParse(newValue.ToString(), System.Globalization.NumberStyles.Float, null, out newFloat);
-
-        if (newFloat != float.NaN)
+        if (!float.TryParse(newValue.ToString(), System.Globalization.NumberStyles.Float, null, out newFloat))
         {
-            this.currentValue = (float)newValue;
-            this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}':", Log.LogLevel.Warning);
+            return;
         }
+
+        this.currentValue = newFloat;
+        this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
     }
 }
 
@@ -176,15 +206,15 @@ public class BoolOption : BaseOption
             this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
             this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
 
-            bool.TryParse(this.entry.BoxedValue.ToString(), out currentValue);
+            if (!bool.TryParse(this.entry.BoxedValue.ToString(), out this.currentValue))
+            {
+                Log.LogOutput($"{this.GetType()}: Could not parse '{Name}':", Log.LogLevel.Warning);
+            }
         }
     }
 
     public bool GetValue()
     {
-        if (entry != null)
-            bool.TryParse(this.entry.BoxedValue.ToString(), out currentValue);
-
         return currentValue;
     }
     public override void SetValue(object newValue)
@@ -200,10 +230,26 @@ public class BoolOption : BaseOption
     }
     private void OnValueChanged(object oldValue, object newValue)
     {
-        if (this.entry == null)
-            return;
-
-        bool.TryParse(this.entry.BoxedValue.ToString(), out currentValue);
+        if (this.entry != null)
+        {
+            if (!bool.TryParse(this.entry.BoxedValue.ToString(), out currentValue))
+            {
+                Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}':", Log.LogLevel.Warning);
+                return;
+            }
+        }
+        else
+        {
+            try
+            {
+                currentValue = (bool)newValue;
+            }
+            catch (Exception e)
+            {
+                Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}': {e}", Log.LogLevel.Warning);
+                return;
+            }
+        }
 
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
     }
@@ -226,13 +272,19 @@ public class StringOption : BaseOption
             this.currentValue = boxedString == null ? currentValue : boxedString;
         }
     }
-
     public string GetValue()
     {
         if (entry != null)
         {
             var boxedString = this.entry.BoxedValue.ToString();
-            this.currentValue = boxedString == null ? currentValue : boxedString;
+
+            if (boxedString == null)
+            {
+                Log.LogOutput($"Could not parse {this.GetType()}'{Name}'", Log.LogLevel.Warning);
+                return currentValue;
+            }
+
+            this.currentValue = boxedString;
         }
 
         return currentValue == null ? "" : currentValue;

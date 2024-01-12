@@ -3,7 +3,7 @@ using QList;
 
 [assembly: MelonInfo(typeof(Mod), "QList", "0.0.1", "dodad")]
 [assembly: MelonGame("Bohemia Interactive", "Silica")]
-[assembly: MelonPriority(1)]
+[assembly: MelonPriority(-99)]
 
 namespace QList;
 
