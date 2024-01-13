@@ -10,6 +10,8 @@ public abstract class BaseOption
     protected static readonly string defaultDescription = "";
 
     public Action<object, object>? OnValueChangedUntyped;
+    public Action<BaseOption>? OnValueChangedOption;
+
     public Action<BaseOption>? OnInfoUpdated;
     internal LemonAction<object, object>? onEntryValueChangedUntyped;
 
@@ -64,6 +66,7 @@ public abstract class BaseOption
 }
 public class IntOption : BaseOption
 {
+    public new Action<IntOption>? OnValueChangedOption;
     internal bool slider;
     internal int currentValue, min, max;
 
@@ -123,6 +126,7 @@ public class IntOption : BaseOption
             int newInt = Convert.ToInt32(newValue);
             this.currentValue = newInt;
             this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+            this.OnValueChangedOption?.Invoke(this);
         }
         catch (Exception e)
         {
@@ -132,6 +136,7 @@ public class IntOption : BaseOption
 }
 public class FloatOption : BaseOption
 {
+    public new Action<FloatOption>? OnValueChangedOption;
     internal bool slider;
     internal float currentValue, min, max;
 
@@ -189,11 +194,13 @@ public class FloatOption : BaseOption
 
         this.currentValue = newFloat;
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        this.OnValueChangedOption?.Invoke(this);
     }
 }
 
 public class BoolOption : BaseOption
 {
+    public new Action<BoolOption>? OnValueChangedOption;
     internal bool currentValue;
 
     public BoolOption(MelonPreferences_Entry? entry = null, bool currentValue = false) : base(entry)
@@ -252,10 +259,12 @@ public class BoolOption : BaseOption
         }
 
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        this.OnValueChangedOption?.Invoke(this);
     }
 }
 public class StringOption : BaseOption
 {
+    public new Action<StringOption>? OnValueChangedOption;
     internal string currentValue;
 
     public StringOption(MelonPreferences_Entry? entry = null, string currentValue = "") : base(entry)
@@ -316,6 +325,7 @@ public class StringOption : BaseOption
         currentValue = newValueString;
 
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        this.OnValueChangedOption?.Invoke(this);
     }
 }
 public class ButtonOption : BaseOption
