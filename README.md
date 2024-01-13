@@ -52,7 +52,7 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
-** 0.0.5**
+**0.0.5**
 
 - Options: Added `Action<BaseOption>? OnValueChangedOption`
 
