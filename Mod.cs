@@ -1,7 +1,7 @@
 ﻿using MelonLoader;
 using QList;
 
-[assembly: MelonInfo(typeof(Mod), "QList", "0.0.5", "dodad")]
+[assembly: MelonInfo(typeof(Mod), "QList", "0.0.6", "dodad")]
 [assembly: MelonGame("Bohemia Interactive", "Silica")]
 [assembly: MelonPriority(-99)]
 
@@ -62,6 +62,7 @@ public class Mod : MelonMod
     {
         Resources.Initialize();
         QList.UI.Manager.Initialize();
+        Options.SortModList();
     }
     public override void OnDeinitializeMelon()
     {

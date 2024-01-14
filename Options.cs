@@ -8,6 +8,7 @@ using System.Reflection;
 public static class Options
 {
     internal static Dictionary<string, ModOptionContainer> CurrentModOptions = new();
+    private static bool initialized;
 
     public static void RegisterMod(MelonMod mod)
     {
@@ -26,6 +27,9 @@ public static class Options
         }
 
         CurrentModOptions.Add(key, new ModOptionContainer(mod, System.Reflection.Assembly.GetCallingAssembly()));
+
+        if (initialized) // Only sort after LateInitialize
+            SortModList();
 
         Log.LogOutput($"Registered mod: '{mod.Info.Name}'", Log.LogLevel.Message);
     }
@@ -47,6 +51,8 @@ public static class Options
         }
 
         CurrentModOptions.Remove(key);
+
+        SortModList();
 
         Log.LogOutput($"Deregistered mod: '{mod.Info.Name}'", Log.LogLevel.Message);
     }
@@ -93,6 +99,20 @@ public static class Options
             option.description = description;
 
         return true;
+    }
+    internal static void SortModList()
+    {
+        var sortedKeys = CurrentModOptions.Keys.ToList();
+        sortedKeys.Sort();
+
+        var sortedDictionary = new Dictionary<string, ModOptionContainer>();
+
+        foreach (var key in sortedKeys)
+            sortedDictionary.Add(key, CurrentModOptions[key]);
+
+        CurrentModOptions = sortedDictionary;
+
+        initialized = true;
     }
 }
 

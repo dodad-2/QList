@@ -52,6 +52,10 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.0.6**
+
+- Mod List: List is now sorted alphabetically
+
 **0.0.5**
 
 - Options: Added `Action<BaseOption>? OnValueChangedOption`
