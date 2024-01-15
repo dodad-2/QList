@@ -52,6 +52,11 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.0.7**
+
+- Logging more clear
+- Cleanup
+
 **0.0.6**
 
 - Mod List: List is now sorted alphabetically
