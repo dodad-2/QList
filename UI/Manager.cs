@@ -25,7 +25,7 @@ internal static class Manager
     }
     internal static Dictionary<string, Image>? ExistingImagePrefabHash = new();
     private static GameObject? container, mainMenuOptions, ingameOptions, ingameLogo;
-    private static Button? mainMenuModOptionsButton, pauseMenuButton, mainMenuBackButton, pauseMenuResumeButton;
+    private static Button? mainMenuModOptionsButton, pauseMenuButton;
     private static Il2CppSilica.UI.PauseMenu? PauseMenuInstance;
     #endregion
 

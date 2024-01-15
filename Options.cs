@@ -22,7 +22,7 @@ public static class Options
 
         if (CurrentModOptions.ContainsKey(key))
         {
-            Log.LogOutput($"Unable to register mod: mod already registered", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to register '{mod.Info.Name}': mod already registered", Log.LogLevel.Warning);
             return;
         }
 
@@ -46,7 +46,7 @@ public static class Options
 
         if (!CurrentModOptions.ContainsKey(key))
         {
-            Log.LogOutput($"Unable to deregister mod: mod not registered", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to deregister '{mod.Info.Name}': mod not registered", Log.LogLevel.Warning);
             return;
         }
 
@@ -77,7 +77,7 @@ public static class Options
 
         if (search == null || search.Count() == 0)
         {
-            Log.LogOutput($"Unable to add option: Mod not registered. Call Options.RegisterMod first. ({assembly})", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly})", Log.LogLevel.Warning);
             return false;
         }
 
@@ -85,7 +85,7 @@ public static class Options
 
         if (container == null || !container.HasValue)
         {
-            Log.LogOutput($"Unable to add option: Mod not registered. Call Options.RegisterMod first. ({assembly}", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly}", Log.LogLevel.Warning);
             return false;
         }
 

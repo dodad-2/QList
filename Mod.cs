@@ -13,8 +13,6 @@ public class Mod : MelonMod
 
     internal static readonly string bundleKey = "QList.qlist_bundle";
 
-    private OptionTypes.ButtonOption? buttonOption;
-
     public override void OnInitializeMelon()
     {
         Instance = this;

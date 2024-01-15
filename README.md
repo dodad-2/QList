@@ -26,9 +26,9 @@ To link a MelonPreference to an option you only need to pass a `MelonPreferences
 
 On a value change `OnValueChangedUntyped` will be invoked whether a MelonPreference reference exists or not.
 
-## Input Notes
+## Notes
 
-Sliders are supported for IntOption and FloatOption
+- Sliders are supported for IntOption and FloatOption
 
 ## Option Types
 
