@@ -1,7 +1,7 @@
 ﻿using MelonLoader;
 using QList;
 
-[assembly: MelonInfo(typeof(Mod), "QList", "0.0.7", "dodad")]
+[assembly: MelonInfo(typeof(Mod), "QList", "0.1.0", "dodad")]
 [assembly: MelonGame("Bohemia Interactive", "Silica")]
 [assembly: MelonPriority(-99)]
 
@@ -65,6 +65,10 @@ public class Mod : MelonMod
     public override void OnDeinitializeMelon()
     {
         Options.DeregisterMod(this);
+    }
+    public override void OnUpdate()
+    {
+        Options.OnUpdate();
     }
     /* 
     private static void ButtonTest(OptionTypes.ButtonOption button) // Option info can be updated at any time

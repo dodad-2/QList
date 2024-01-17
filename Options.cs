@@ -8,6 +8,7 @@ using System.Reflection;
 public static class Options
 {
     internal static Dictionary<string, ModOptionContainer> CurrentModOptions = new();
+    private static List<BaseOption> OnUpdateListeners = new();
     private static bool initialized;
 
     public static void RegisterMod(MelonMod mod)
@@ -113,6 +114,26 @@ public static class Options
         CurrentModOptions = sortedDictionary;
 
         initialized = true;
+    }
+    internal static void SubscribeOnUpdate(BaseOption option)
+    {
+        if (OnUpdateListeners.Contains(option))
+            return;
+
+        OnUpdateListeners.Add(option);
+    }
+    public static void UnsubscribeOnUpdate(BaseOption option)
+    {
+        if (!OnUpdateListeners.Contains(option))
+            return;
+
+        OnUpdateListeners.Remove(option);
+    }
+    internal static void OnUpdate()
+    {
+        foreach (var option in OnUpdateListeners)
+            if (option != null)
+                option.OnUpdate();
     }
 }
 

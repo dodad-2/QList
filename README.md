@@ -39,6 +39,7 @@ Option types are located at `QList.OptionTypes`. Currently available:
 - BoolOption
 - StringOption
 - ButtonOption
+- KeybindOption
 
 # Known Issues
 
@@ -51,6 +52,10 @@ Option types are located at `QList.OptionTypes`. Currently available:
 - The <a href="https://discord.gg/5SHQxFaess">Silica Modders Discord</a>
 
 # Changelog
+
+**0.1.0**
+
+- Options: Added `KeybindOption`
 
 **0.0.7**
 

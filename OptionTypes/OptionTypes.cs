@@ -1,6 +1,8 @@
 namespace QList.OptionTypes;
 
 using MelonLoader;
+using UnityEngine;
+using Newtonsoft.Json;
 
 public abstract class BaseOption
 {
@@ -62,6 +64,10 @@ public abstract class BaseOption
     }
 
     public virtual void SetValue(object newValue) { }
+    /// <summary>
+    /// Remember to call Options.SubcribeOnUpdate
+    /// </summary>
+    public virtual void OnUpdate() { }
     internal virtual void OnDestroy() { }
 }
 public class IntOption : BaseOption
@@ -219,7 +225,6 @@ public class BoolOption : BaseOption
             }
         }
     }
-
     public bool GetValue()
     {
         return currentValue;
@@ -345,16 +350,110 @@ public class ButtonOption : BaseOption
             OnInfoUpdated?.Invoke(this);
         }
     }
-
     protected string buttonName = "";
 
     public ButtonOption(string buttonName = "") : base(null)
     {
         ButtonName = buttonName;
     }
-
     public virtual void Click()
     {
         OnClick?.Invoke(this);
+    }
+}
+public class KeybindOption : BaseOption // TODO: currentValue needs to be the serialized version of currentKeybind
+{
+    public new Action<KeybindOption>? OnValueChangedOption;
+    public Action<KeybindOption>? OnKeybindDown;
+    public Action<KeybindOption>? OnKeybindUp;
+
+    internal KeyCode[] currentValue = new KeyCode[0];
+    private bool listenForKeyUp;
+
+    public KeybindOption(MelonPreferences_Entry? entry = null, KeyCode[]? currentValue = null) : base(entry)
+    {
+        this.entry = entry;
+
+        if (currentValue != null)
+            this.currentValue = currentValue;
+
+        Options.SubscribeOnUpdate(this);
+
+        if (this.entry != null)
+        {
+            //this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
+            //this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
+
+            KeyCode[]? boxedArray = null;
+            var json = this.entry.BoxedValue.ToString();
+
+            if (json != null)
+                boxedArray = JsonConvert.DeserializeObject<KeyCode[]>(json);
+
+            if (boxedArray != null)
+                this.currentValue = boxedArray;
+        }
+    }
+    public KeyCode[] GetValue()
+    {
+        return currentValue;
+    }
+    ///<param name="newValue">KeyCode[]</param>
+    public override void SetValue(object newValue)
+    {
+        KeyCode[] newValueArray = new KeyCode[0];
+
+        if (newValue != null)
+            newValueArray = (KeyCode[])newValue;
+
+        if (entry != null)
+            entry.BoxedValue = JsonConvert.SerializeObject(newValueArray);
+
+        var oldValue = currentValue;
+        currentValue = newValueArray;
+
+        this.OnValueChanged(oldValue, currentValue);
+    }
+    public override void OnUpdate()
+    {
+        if (currentValue.Length == 0)
+            return;
+
+        if (listenForKeyUp)
+        {
+            for (int e = 0; e < currentValue.Length; e++)
+            {
+                if (Input.GetKeyUp(currentValue[e]))
+                {
+                    OnKeybindUp?.Invoke(this);
+                    listenForKeyUp = false;
+                    break;
+                }
+            }
+        }
+
+        for (int e = 0; e < currentValue.Length; e++)
+        {
+            if (!Input.GetKey(currentValue[e]))
+                return;
+        }
+
+        if (Input.GetKeyDown(currentValue[currentValue.Length - 1]))
+        {
+            OnKeybindDown?.Invoke(this);
+            listenForKeyUp = true;
+        }
+    }
+    internal override void OnDestroy()
+    {
+        this.entry?.OnEntryValueChangedUntyped.Unsubscribe(onEntryValueChangedUntyped);
+    }
+    private void OnValueChanged(object oldValue, object newValue)
+    {
+        if (newValue == null)
+            return;
+
+        this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        this.OnValueChangedOption?.Invoke(this);
     }
 }

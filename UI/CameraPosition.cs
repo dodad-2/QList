@@ -19,7 +19,7 @@ public class CameraPosition : MonoBehaviour
     {
         originalPosition = gameObject.transform.position;
         originalRotation = gameObject.transform.rotation;
-        targetPosition = new Vector3(-70.4658f, 1.8027f, 28.0986f);
+        targetPosition = new Vector3(-70.5f, 1.9f, 28.1f); // -70.4658f, 1.8027f, 28.0986f
 
         Quaternion forward = Quaternion.identity;
 

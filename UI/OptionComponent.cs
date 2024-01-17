@@ -5,6 +5,7 @@ using UnityEngine;
 using QList.OptionTypes;
 using Il2CppTMPro;
 using UnityEngine.UI;
+//using System.Runtime.CompilerServices;
 
 [RegisterTypeInIl2Cpp]
 public class OptionComponent : MonoBehaviour
@@ -43,6 +44,10 @@ public class OptionComponent : MonoBehaviour
     private GameObject? buttonEdit;
     private Button? button;
     private TextMeshProUGUI? buttonText;
+
+    private GameObject? keybindEdit;
+    private TMP_InputField? keybindInputField;
+    private Button? keybindButton;
     #endregion
 
     #region Unity Methods
@@ -112,6 +117,15 @@ public class OptionComponent : MonoBehaviour
             button = buttonEdit.transform.GetChild(0).GetComponent<Button>();
             button.onClick.AddListener(new Action(OnButtonClick));
             buttonText = button.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        }
+
+        keybindEdit = transform.FindChild("Option/Editable/KeybindEdit").gameObject;
+
+        if (keybindEdit != null)
+        {
+            keybindButton = keybindEdit.GetComponentInChildren<Button>();
+            keybindButton.onClick.AddListener(new Action(OnKeybindButtonClick));
+            keybindInputField = keybindEdit.GetComponentInChildren<TMP_InputField>();
         }
     }
     private void OnDestroy()
@@ -237,6 +251,15 @@ public class OptionComponent : MonoBehaviour
                 buttonEdit.SetActive(true);
                 currentInput = buttonEdit;
                 break;
+            case KeybindOption:
+                KeybindOption? keybindOption = option as KeybindOption;
+
+                if (keybindOption == null || keybindEdit == null)
+                    break;
+
+                keybindEdit.SetActive(true);
+                currentInput = keybindEdit;
+                break;
         }
     }
     #endregion
@@ -328,6 +351,14 @@ public class OptionComponent : MonoBehaviour
 
                 buttonText.SetText(buttonOption.ButtonName);
 
+                break;
+            case KeybindOption:
+                KeybindOption? keybindOption = option as KeybindOption;
+
+                if (keybindOption == null || keybindInputField == null)
+                    break;
+
+                keybindInputField.SetText(HotkeyListener.GetComboString(keybindOption.currentValue));
                 break;
         }
     }
@@ -435,6 +466,40 @@ public class OptionComponent : MonoBehaviour
 
         if (buttonOption != null)
             buttonOption.Click();
+    }
+    //[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+    private void OnKeybindButtonClick()
+    {
+        Log.LogOutput($"OnKeybindButtonClick");
+        var keybindButton = option as KeybindOption;
+
+        if (keybindButton == null)
+            return;
+
+        keybindButton.name = keybindButton.Name; // fix
+        HotkeyListener.OnHotkey += new Action<KeyCode[]>(OnHotkey);
+        HotkeyListener.OnCancelHotkey += new Action(OnCancelHotkey);
+        HotkeyListener.BeginListen();
+    }
+    private void OnHotkey(KeyCode[] keyCodes)
+    {
+        var hotkeyButton = option as KeybindOption;
+
+        if (hotkeyButton != null)
+            hotkeyButton.SetValue(keyCodes);
+    }
+    private void OnCancelHotkey()
+    {
+        var hotkeyButton = option as KeybindOption;
+
+        if (hotkeyButton != null)
+            hotkeyButton.SetValue(new KeyCode[0]);
+    }
+    #endregion
+
+    #region Helpers
+    private void HotkeyButtonReroute()
+    {
     }
     #endregion
 }
