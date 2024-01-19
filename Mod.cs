@@ -1,7 +1,7 @@
 ﻿using MelonLoader;
 using QList;
 
-[assembly: MelonInfo(typeof(Mod), "QList", "0.1.0", "dodad")]
+[assembly: MelonInfo(typeof(Mod), "QList", "0.1.1", "dodad")]
 [assembly: MelonGame("Bohemia Interactive", "Silica")]
 [assembly: MelonPriority(-99)]
 

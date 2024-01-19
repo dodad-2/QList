@@ -11,6 +11,7 @@ public class ModOptionsMenu : MonoBehaviour
 {
     #region Variables
     public static ModOptionsMenu? Instance;
+    public static bool OpenOnEnable;
 
     private TextMeshProUGUI? listTitle;
     private TextMeshProUGUI? modTitle;
@@ -31,11 +32,6 @@ public class ModOptionsMenu : MonoBehaviour
         Initialize();
         Close();
     }
-    private void Update()
-    {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape) && !Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main))
-            Manager.ToggleModOptionsMenuEnabled();
-    }
     #endregion
 
     #region Static
@@ -43,6 +39,8 @@ public class ModOptionsMenu : MonoBehaviour
     {
         if (Instance == null || Instance.gameObject.activeSelf)
             return;
+
+        OpenOnEnable = false;
 
         Instance.gameObject.SetActive(true);
 
@@ -66,6 +64,9 @@ public class ModOptionsMenu : MonoBehaviour
             return;
 
         Instance.gameObject.SetActive(false);
+
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+            OpenOnEnable = true;
 
         if (Instance.cameraPosition != null)
             Instance.cameraPosition.reposition = false;
@@ -93,18 +94,25 @@ public class ModOptionsMenu : MonoBehaviour
             return;
         }
 
-        var font = fonts.Where(x => x.name.ToLower().Contains("bebas"));
+        var fontSearch = fonts.Where(x => x.name.ToLower().Contains("bebas"));
 
-        if (font == null || font.First() == null)
+        if (fontSearch == null || fontSearch.First() == null)
         {
-            Log.LogOutput($"Unable to find font", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to find font (1)", Log.LogLevel.Warning);
             return;
         }
 
-        font = font.ToArray();
+        fontSearch = fontSearch.ToArray(); // Is this necessary?
+        var font = fontSearch.First().TryCast<TMP_FontAsset>();
+
+        if (font == null)
+        {
+            Log.LogOutput($"Unable to find font (2)", Log.LogLevel.Warning);
+            return;
+        }
 
         foreach (var text in GetComponentsInChildren<TextMeshProUGUI>(true))
-            text.font = font.First().TryCast<TMP_FontAsset>();
+            text.font = font;
     }
     #endregion
 }

@@ -240,6 +240,9 @@ internal static class Manager
                 pauseMenuButton.transform.SetParent(ingameOptions.transform.parent.GetComponentInChildren<VerticalLayoutGroup>().transform);
                 pauseMenuButton.transform.SetSiblingIndex(2);
 
+                var onEnableNotifier = pauseMenuButton.gameObject.AddComponent<OnEnableNotifier>();
+                onEnableNotifier.OnEnabled += new Action<OnEnableNotifier>(OnEnablePauseMenuNotifier);
+
                 var modsButtonRect = pauseMenuButton.GetComponent<RectTransform>();
 
                 FormatButton(pauseMenuButton);
@@ -303,6 +306,16 @@ internal static class Manager
     #endregion
 
     #region Helpers
+    private static void OnEnablePauseMenuNotifier(OnEnableNotifier notifier)
+    {
+        if (ModOptionsMenu.OpenOnEnable)
+        {
+            SetModOptionsMenuEnabled(true);
+
+            if (ModOptionsController.lastMod != null)
+                ModOptionsController.ShowOptionsFor(ModOptionsController.lastMod);
+        }
+    }
     private static void OnClickCloseModOptionsMenu()
     {
         if (ModOptionsMenu.Instance != null && ModOptionsMenu.Instance.gameObject.activeSelf)

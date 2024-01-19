@@ -31,7 +31,7 @@ public class HotkeyListener : MonoBehaviour
 
         foreach (var keyCode in Enum.GetValues(typeof(KeyCode)))
         {
-            if ((KeyCode)keyCode != KeyCode.CapsLock && (KeyCode)keyCode != KeyCode.Escape)
+            if ((KeyCode)keyCode != KeyCode.CapsLock && (KeyCode)keyCode != KeyCode.Backspace)
                 validKeys.Add((KeyCode)keyCode);
         }
 
@@ -42,7 +42,7 @@ public class HotkeyListener : MonoBehaviour
 
     public void Update()
     {
-        if (Input.GetKey(KeyCode.Escape) || Input.GetKey(KeyCode.CapsLock))
+        if (Input.GetKey(KeyCode.Escape) || Input.GetKey(KeyCode.Backspace))
             CancelListen();
         else
         {
@@ -71,14 +71,15 @@ public class HotkeyListener : MonoBehaviour
     }
     public void OnDisable()
     {
-        Log.LogOutput($"HotkeyListener.OnDisable");
         currentCombo.Clear();
         OnHotkey = null;
         OnCancelHotkey = null;
+
+        if (keybindDisplay != null)
+            keybindDisplay.SetText("");
     }
     public static bool BeginListen()
     {
-        Log.LogOutput($"HotkeyListener.BeginListen");
         if (Instance == null || Instance.gameObject.activeSelf)
             return false;
 

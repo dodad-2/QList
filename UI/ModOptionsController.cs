@@ -20,6 +20,8 @@ public class ModOptionsController : MonoBehaviour
     private static OptionComponent? optionPrefab;
     private static RectTransform? descriptionPrefab;
     private static TextMeshProUGUI? titleText;
+
+    public static string? lastMod;
     #endregion
 
     #region Unity Methods
@@ -128,6 +130,8 @@ public class ModOptionsController : MonoBehaviour
             Log.LogOutput($"Mod '{mod}' not registered", Log.LogLevel.Warning);
             return;
         }
+
+        lastMod = mod;
 
         var modContainer = search.First();
 

@@ -53,6 +53,12 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.1.1**
+
+- Mod Options Window: Reopens to last mod while ingame
+- Keybinds: Changed the cancel change keybind hotkey from Capslock to Backspace
+- Keybinds: UI fixes
+
 **0.1.0**
 
 - Options: Added `KeybindOption`
