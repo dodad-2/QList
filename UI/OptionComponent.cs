@@ -470,7 +470,6 @@ public class OptionComponent : MonoBehaviour
     //[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private void OnKeybindButtonClick()
     {
-        Log.LogOutput($"OnKeybindButtonClick");
         var keybindButton = option as KeybindOption;
 
         if (keybindButton == null)

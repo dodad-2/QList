@@ -4,6 +4,9 @@ using MelonLoader;
 using UnityEngine;
 using Newtonsoft.Json;
 
+// TODO
+// Each option needs to have standardized logic concerning GetValue, SetValue and Actions
+
 public abstract class BaseOption
 {
     protected static readonly string defaultCategory = "Options";
@@ -325,7 +328,10 @@ public class StringOption : BaseOption
         var newValueString = newValue.ToString();
 
         if (newValueString == null)
+        {
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}'", Log.LogLevel.Warning);
             return;
+        }
 
         currentValue = newValueString;
 
@@ -361,7 +367,7 @@ public class ButtonOption : BaseOption
         OnClick?.Invoke(this);
     }
 }
-public class KeybindOption : BaseOption // TODO: currentValue needs to be the serialized version of currentKeybind
+public class KeybindOption : BaseOption
 {
     public new Action<KeybindOption>? OnValueChangedOption;
     public Action<KeybindOption>? OnKeybindDown;
@@ -381,8 +387,8 @@ public class KeybindOption : BaseOption // TODO: currentValue needs to be the se
 
         if (this.entry != null)
         {
-            //this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
-            //this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
+            this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
+            this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
 
             KeyCode[]? boxedArray = null;
             var json = this.entry.BoxedValue.ToString();
@@ -403,16 +409,24 @@ public class KeybindOption : BaseOption // TODO: currentValue needs to be the se
     {
         KeyCode[] newValueArray = new KeyCode[0];
 
-        if (newValue != null)
-            newValueArray = (KeyCode[])newValue;
+        if (newValue == null)
+        {
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse null value '{Name}'", Log.LogLevel.Warning); // TODO ensure this change doesn't cause problems (no longer nullable)
+            return;
+        }
+
+        newValueArray = (KeyCode[])newValue;
+
+        if (newValueArray == null)
+        {
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}'", Log.LogLevel.Warning);
+            return;
+        }
 
         if (entry != null)
             entry.BoxedValue = JsonConvert.SerializeObject(newValueArray);
-
-        var oldValue = currentValue;
-        currentValue = newValueArray;
-
-        this.OnValueChanged(oldValue, currentValue);
+        else
+            this.OnValueChanged(currentValue == null ? new KeyCode[0] : currentValue, newValueArray);
     }
     public override void OnUpdate()
     {
@@ -453,7 +467,100 @@ public class KeybindOption : BaseOption // TODO: currentValue needs to be the se
         if (newValue == null)
             return;
 
+        KeyCode[]? newValueArray = null;
+
+        try
+        {
+            newValueArray = (KeyCode[])newValue;
+        }
+        catch
+        {
+            var json = newValue.ToString();
+
+            try
+            {
+                if (json != null)
+                    newValueArray = JsonConvert.DeserializeObject<KeyCode[]>(json);
+            }
+            catch (Exception e)
+            {
+                Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}', {e}", Log.LogLevel.Warning);
+                return;
+            }
+        }
+
+        if (newValueArray == null)
+        {
+            Log.LogOutput($"{this.GetType()}.OnValueChanged: Could not parse '{Name}'", Log.LogLevel.Warning);
+            return;
+        }
+
+        currentValue = newValueArray;
+
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
+        this.OnValueChangedOption?.Invoke(this);
+    }
+}
+public class DropdownOption<T> : BaseOption
+{
+    public new Action<DropdownOption<T>>? OnValueChangedOption;
+    internal string[]? optionList;
+    internal string? currentValue;
+
+    public DropdownOption(MelonPreferences_Entry? entry = null, string? currentValue = null, string[]? optionList = null) : base(entry)
+    {
+        this.entry = entry;
+        this.onEntryValueChangedUntyped = new LemonAction<object, object>(OnValueChanged);
+
+        if (currentValue != null)
+            this.currentValue = currentValue;
+
+        if (this.entry != null)
+        {
+            this.entry.OnEntryValueChangedUntyped.Subscribe(onEntryValueChangedUntyped);
+
+            var boxedString = this.entry.BoxedValue.ToString();
+
+            if (boxedString != null)
+                this.currentValue = boxedString;
+        }
+
+        if (optionList != null)
+            this.optionList = optionList;
+    }
+
+    public string GetValue()
+    {
+        if (currentValue == null)
+            return "";
+
+        return currentValue;
+    }
+    public string[] GetOptions()
+    {
+        if (optionList == null)
+            return new string[0];
+
+        return optionList;
+    }
+    public override void SetValue(object newValue)
+    {
+        string newString = "";
+
+        if (newValue != null)
+            newString = (string)newValue;
+
+        if (entry != null)
+            entry.BoxedValue = newString;
+
+        var oldValue = currentValue == null ? "" : currentValue;
+        currentValue = newString;
+
+        this.OnValueChanged(oldValue, newString);
+    }
+    private void OnValueChanged(object oldValue, object newValue)
+    {
+        this.OnValueChangedUntyped?.Invoke(oldValue, newValue); // TODO melon preference changes need to properly update KeybindOption and DropdownOption's currentValue
         this.OnValueChangedOption?.Invoke(this);
     }
 }

@@ -53,6 +53,10 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.1.2**
+
+- Options: `KeybindOption` properly updates when the MelonPreference value is changed
+
 **0.1.1**
 
 - Mod Options Window: Reopens to last mod while ingame
