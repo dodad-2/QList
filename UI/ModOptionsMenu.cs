@@ -1,9 +1,9 @@
 namespace QList.UI;
 
-using MelonLoader;
-using UnityEngine;
 using Il2CppInterop.Runtime;
 using Il2CppTMPro;
+using MelonLoader;
+using UnityEngine;
 using UnityEngine.UI;
 
 [RegisterTypeInIl2Cpp]
@@ -21,7 +21,9 @@ public class ModOptionsMenu : MonoBehaviour
     #endregion
 
     #region Unity Methods
-    public ModOptionsMenu(IntPtr ptr) : base(ptr) { }
+    public ModOptionsMenu(IntPtr ptr)
+        : base(ptr) { }
+
     private void Awake()
     {
         if (Instance != null)
@@ -35,6 +37,7 @@ public class ModOptionsMenu : MonoBehaviour
     #endregion
 
     #region Static
+
     public static void Open() // TODO allow opening a mod's page
     {
         if (Instance == null || Instance.gameObject.activeSelf)
@@ -58,6 +61,7 @@ public class ModOptionsMenu : MonoBehaviour
         if (Instance.cameraPosition != null)
             Instance.cameraPosition.reposition = true;
     }
+
     public static void Close()
     {
         if (Instance == null || !Instance.gameObject.activeSelf)
@@ -78,11 +82,22 @@ public class ModOptionsMenu : MonoBehaviour
     {
         listTitle = transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>();
         modTitle = transform.GetChild(1).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>();
-        listContentContainer = transform.GetChild(0).GetChild(1).GetChild(0).GetChild(0).GetComponent<RectTransform>();
+        listContentContainer = transform
+            .GetChild(0)
+            .GetChild(1)
+            .GetChild(0)
+            .GetChild(0)
+            .GetComponent<RectTransform>();
 
-        if (Manager.ExistingImagePrefabHash != null && Manager.ExistingImagePrefabHash.ContainsKey("window_md"))
+        if (
+            Manager.ExistingImagePrefabHash != null
+            && Manager.ExistingImagePrefabHash.ContainsKey("window_md")
+        )
         {
-            foreach (var image in GetComponentsInChildren<Image>().Where(x => x.name.ToLower().Equals("window_md")))
+            foreach (
+                var image in GetComponentsInChildren<Image>()
+                    .Where(x => x.name.ToLower().Equals("window_md"))
+            )
                 image.sprite = Manager.ExistingImagePrefabHash["window_md"].sprite;
         }
 

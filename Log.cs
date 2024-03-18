@@ -6,6 +6,7 @@ internal static class Log // TODO rewrite this
 {
     internal static LogLevel logLevel = LogLevel.None;
     internal static MelonMod? mod;
+
     internal static bool SetMod(MelonMod newMod, LogLevel logLevel = LogLevel.None)
     {
         if (newMod == null)
@@ -23,14 +24,23 @@ internal static class Log // TODO rewrite this
         {
             category = MelonPreferences.CreateCategory("General");
             category.SetFilePath(PreferencesConfig.filePath);
-            entry = category.CreateEntry<int>("LOG_LEVEL", 5, "Log Level", "None = 0, Message = 1, Info = 2, Warning = 3, Error = 4, Fatal = 5, Debug = 6, All = 7");
+            entry = category.CreateEntry<int>("LOG_LEVEL", 5, "Log Level");
             category.SaveToFile();
         }
 
-        if (entry == null)
-            entry = category.GetEntry("LOG_LEVEL");
+        entry ??= category.GetEntry("LOG_LEVEL");
 
-        var logLevelOption = new OptionTypes.IntOption(entry, true, 0, 0, 7, 1);
+        string[] valueNames = new string[8];
+        valueNames[0] = "None";
+        valueNames[1] = "Message";
+        valueNames[2] = "Info";
+        valueNames[3] = "Warning";
+        valueNames[4] = "Error";
+        valueNames[5] = "Fatal";
+        valueNames[6] = "Debug";
+        valueNames[7] = "All";
+
+        var logLevelOption = new OptionTypes.DropdownOption(entry, 7, valueNames);
         logLevelOption.OnValueChangedUntyped += OnValueUpdatedUntyped;
         Options.AddOption(logLevelOption);
 
@@ -38,6 +48,7 @@ internal static class Log // TODO rewrite this
 
         return true;
     }
+
     internal static void LogOutput(object data, LogLevel level = LogLevel.Debug)
     {
         if (level > logLevel || logLevel == LogLevel.None || mod == null)
@@ -65,10 +76,12 @@ internal static class Log // TODO rewrite this
                 break;
         }
     }
+
     internal static void OnValueUpdatedUntyped(object oldValue, object newValue)
     {
         logLevel = (LogLevel)Convert.ToInt32(newValue);
     }
+
     public enum LogLevel
     {
         None = 0,
@@ -80,5 +93,4 @@ internal static class Log // TODO rewrite this
         Debug = 6,
         All = 7
     }
-
 }

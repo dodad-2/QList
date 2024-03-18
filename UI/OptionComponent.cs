@@ -1,10 +1,11 @@
 namespace QList.UI;
 
-using MelonLoader;
-using UnityEngine;
-using QList.OptionTypes;
 using Il2CppTMPro;
+using MelonLoader;
+using QList.OptionTypes;
+using UnityEngine;
 using UnityEngine.UI;
+
 //using System.Runtime.CompilerServices;
 
 [RegisterTypeInIl2Cpp]
@@ -18,8 +19,10 @@ public class OptionComponent : MonoBehaviour
 
     private Action<object, object>? onValueChangedUntypedDelegate;
     private Action<BaseOption>? onOptionInfoUpdatedDelegate;
+    private Action<bool>? onAllowUserEditsUpdated;
 
     private BaseOption? option;
+    private Selectable? selectable;
     private TextMeshProUGUI? title;
     private TextMeshProUGUI? description;
     private GameObject? currentInput;
@@ -48,6 +51,9 @@ public class OptionComponent : MonoBehaviour
     private GameObject? keybindEdit;
     private TMP_InputField? keybindInputField;
     private Button? keybindButton;
+
+    private GameObject? dropdownEdit;
+    private TMP_Dropdown? dropdownInputField;
     #endregion
 
     #region Unity Methods
@@ -55,6 +61,7 @@ public class OptionComponent : MonoBehaviour
     {
         onValueChangedUntypedDelegate = new Action<object, object>(OnValueChangedUntyped);
         onOptionInfoUpdatedDelegate = new Action<BaseOption>(OnOptionInfoUpdated);
+        onAllowUserEditsUpdated = new Action<bool>(OnAllowUserEditsUpdated);
 
         title = transform.GetChild(1).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>();
 
@@ -127,7 +134,16 @@ public class OptionComponent : MonoBehaviour
             keybindButton.onClick.AddListener(new Action(OnKeybindButtonClick));
             keybindInputField = keybindEdit.GetComponentInChildren<TMP_InputField>();
         }
+
+        dropdownEdit = transform.FindChild("Option/Editable/DropdownEdit").gameObject;
+
+        if (dropdownEdit != null)
+        {
+            dropdownInputField = dropdownEdit.GetComponentInChildren<TMP_Dropdown>();
+            dropdownInputField.onValueChanged.AddListener(new Action<int>(OnDropdownChanged));
+        }
     }
+
     private void OnDestroy()
     {
         UnsubscribeFromOption();
@@ -141,10 +157,12 @@ public class OptionComponent : MonoBehaviour
         ActivateInput();
         UpdateUIFromOption();
     }
+
     private void HideInput()
     {
         currentInput?.gameObject.SetActive(false);
     }
+
     private void ActivateInput()
     {
         if (option == null)
@@ -158,6 +176,8 @@ public class OptionComponent : MonoBehaviour
                 if (intOption == null)
                     break;
 
+                var intValue = intOption.GetValue();
+
                 if (intOption.slider)
                 {
                     if (sliderEdit == null || sliderInputField == null || slider == null)
@@ -168,23 +188,30 @@ public class OptionComponent : MonoBehaviour
                     slider.wholeNumbers = true;
                     sliderInputField.contentType = TMP_InputField.ContentType.IntegerNumber;
                     sliderInputField.keyboardType = TouchScreenKeyboardType.NumberPad;
-                    sliderInputField.characterValidation = TMP_InputField.CharacterValidation.Integer;
+                    sliderInputField.characterValidation = TMP_InputField
+                        .CharacterValidation
+                        .Integer;
 
-                    //slider.SetValueWithoutNotify(intOption.currentValue);
-                    //sliderInputField.SetText(intOption.currentValue.ToString());
+                    slider.value = intValue;
+                    sliderInputField.SetText(intValue.ToString());
 
                     sliderEdit.gameObject.SetActive(true);
                     currentInput = sliderEdit;
+                    selectable = sliderInputField;
                 }
                 else
                 {
                     if (intEdit == null || intInputField == null)
                         break;
 
-                    //intInputField.SetText(intOption.currentValue.ToString());
+                    if (intOption.entry == null)
+                    {
+                        intInputField.SetText(intValue.ToString());
+                    }
 
                     intEdit.gameObject.SetActive(true);
                     currentInput = intEdit;
+                    selectable = intInputField;
                 }
 
                 break;
@@ -193,6 +220,8 @@ public class OptionComponent : MonoBehaviour
 
                 if (floatOption == null)
                     break;
+
+                var floatValue = floatOption.GetValue();
 
                 if (floatOption.slider)
                 {
@@ -204,13 +233,16 @@ public class OptionComponent : MonoBehaviour
                     slider.wholeNumbers = false;
                     sliderInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
                     sliderInputField.keyboardType = TouchScreenKeyboardType.NumbersAndPunctuation;
-                    sliderInputField.characterValidation = TMP_InputField.CharacterValidation.Decimal;
+                    sliderInputField.characterValidation = TMP_InputField
+                        .CharacterValidation
+                        .Decimal;
 
-                    //slider.SetValueWithoutNotify(floatOption.currentValue);
-                    //sliderInputField.SetText(floatOption.currentValue.ToString());
+                    slider.value = floatValue;
+                    sliderInputField.SetText(floatValue.ToString());
 
                     sliderEdit.gameObject.SetActive(true);
                     currentInput = sliderEdit;
+                    selectable = sliderInputField;
                 }
                 else
                 {
@@ -221,50 +253,87 @@ public class OptionComponent : MonoBehaviour
 
                     floatEdit.gameObject.SetActive(true);
                     currentInput = floatEdit;
+                    selectable = floatInputField;
                 }
 
                 break;
             case BoolOption:
                 BoolOption? boolOption = option as BoolOption;
 
-                if (boolOption == null || boolEdit == null)
+                if (boolOption == null || boolEdit == null || boolToggle == null)
                     break;
 
                 boolEdit.SetActive(true);
                 currentInput = boolEdit;
+                selectable = boolToggle;
+
                 break;
             case StringOption:
                 StringOption? stringOption = option as StringOption;
 
-                if (stringOption == null || stringEdit == null)
+                if (stringOption == null || stringEdit == null || stringInputField == null)
                     break;
 
                 stringEdit.SetActive(true);
                 currentInput = stringEdit;
+                selectable = stringInputField;
+
                 break;
             case ButtonOption:
                 ButtonOption? buttonOption = option as ButtonOption;
 
-                if (buttonOption == null || buttonEdit == null)
+                if (buttonOption == null || buttonEdit == null || button == null)
                     break;
 
                 buttonEdit.SetActive(true);
                 currentInput = buttonEdit;
+                selectable = button;
+
                 break;
             case KeybindOption:
                 KeybindOption? keybindOption = option as KeybindOption;
 
-                if (keybindOption == null || keybindEdit == null)
+                if (keybindOption == null || keybindEdit == null || keybindButton == null)
                     break;
 
                 keybindEdit.SetActive(true);
                 currentInput = keybindEdit;
+                selectable = keybindButton;
+
+                break;
+            case DropdownOption:
+                DropdownOption? dropdownOption = option as DropdownOption;
+
+                if (dropdownOption == null || dropdownEdit == null || dropdownInputField == null)
+                    break;
+
+                dropdownEdit.SetActive(true);
+
+                var valueNames = dropdownOption.GetValueNames();
+
+                dropdownInputField.options.Clear();
+
+                for (int e = 0; e < valueNames.Length; e++)
+                    dropdownInputField.options.Add(new TMP_Dropdown.OptionData(valueNames[e]));
+
+                currentInput = dropdownEdit;
+                selectable = dropdownInputField;
+
                 break;
         }
+
+        if (selectable != null)
+            selectable.interactable = option.allowUserEdits;
     }
     #endregion
 
     #region Option
+    public void OnAllowUserEditsUpdated(bool value)
+    {
+        if (selectable != null)
+            selectable.interactable = value;
+    }
+
     public void SetOption(BaseOption? option, TextMeshProUGUI? description = null)
     {
         if (option == null || title == null)
@@ -280,10 +349,12 @@ public class OptionComponent : MonoBehaviour
         UpdateInputMode();
         OnOptionInfoUpdated(option);
     }
+
     public BaseOption? GetOption()
     {
         return this.option;
     }
+
     public void UpdateUIFromOption()
     {
         if (option == null)
@@ -294,23 +365,35 @@ public class OptionComponent : MonoBehaviour
             case IntOption:
                 IntOption? intOption = option as IntOption;
 
-                if (intOption == null || slider == null || sliderInputField == null || intInputField == null)
+                if (
+                    intOption == null
+                    || slider == null
+                    || sliderInputField == null
+                    || intInputField == null
+                )
                     break;
 
                 if (intOption.slider)
                 {
                     slider.SetValueWithoutNotify(intOption.currentValue);
                     sliderInputField.SetTextWithoutNotify(intOption.currentValue.ToString());
+                    sliderInputField.interactable = option.allowUserEdits;
                 }
                 else
                 {
                     intInputField.SetText(intOption.currentValue.ToString());
+                    intInputField.interactable = option.allowUserEdits;
                 }
                 break;
             case FloatOption:
                 FloatOption? floatOption = option as FloatOption;
 
-                if (floatOption == null || slider == null || sliderInputField == null || floatInputField == null)
+                if (
+                    floatOption == null
+                    || slider == null
+                    || sliderInputField == null
+                    || floatInputField == null
+                )
                     break;
 
                 var floatRounded = Math.Round((double)floatOption.currentValue, 3).ToString();
@@ -319,10 +402,12 @@ public class OptionComponent : MonoBehaviour
                 {
                     slider.SetValueWithoutNotify(floatOption.currentValue);
                     sliderInputField.SetTextWithoutNotify(floatRounded);
+                    sliderInputField.interactable = option.allowUserEdits;
                 }
                 else
                 {
                     floatInputField.SetText(floatRounded);
+                    floatInputField.interactable = option.allowUserEdits;
                 }
                 break;
             case BoolOption:
@@ -332,6 +417,7 @@ public class OptionComponent : MonoBehaviour
                     break;
 
                 UpdateBoolInput(boolOption.currentValue);
+                boolToggle.interactable = option.allowUserEdits;
 
                 break;
             case StringOption:
@@ -340,25 +426,43 @@ public class OptionComponent : MonoBehaviour
                 if (stringOption == null || stringInputField == null)
                     break;
 
-                stringInputField.SetTextWithoutNotify(stringOption.currentValue == null ? "" : stringOption.currentValue);
+                stringInputField.SetTextWithoutNotify(
+                    stringOption.currentValue == null ? "" : stringOption.currentValue
+                );
+                stringInputField.interactable = option.allowUserEdits;
 
                 break;
             case ButtonOption:
                 ButtonOption? buttonOption = option as ButtonOption;
 
-                if (buttonOption == null || buttonText == null)
+                if (buttonOption == null || buttonText == null || button == null)
                     break;
 
                 buttonText.SetText(buttonOption.ButtonName);
+                button.interactable = option.allowUserEdits;
 
                 break;
             case KeybindOption:
                 KeybindOption? keybindOption = option as KeybindOption;
 
-                if (keybindOption == null || keybindInputField == null)
+                if (keybindOption == null || keybindInputField == null || keybindButton == null)
                     break;
 
-                keybindInputField.SetText(HotkeyListener.GetComboString(keybindOption.currentValue));
+                keybindInputField.SetText(
+                    HotkeyListener.GetComboString(keybindOption.currentValue)
+                );
+                keybindButton.interactable = option.allowUserEdits;
+
+                break;
+            case DropdownOption:
+                DropdownOption? dropdownOption = option as DropdownOption;
+
+                if (dropdownOption == null || dropdownInputField == null)
+                    break;
+
+                dropdownInputField.SetValueWithoutNotify(dropdownOption.GetValue());
+                dropdownInputField.interactable = option.allowUserEdits;
+
                 break;
         }
     }
@@ -372,7 +476,9 @@ public class OptionComponent : MonoBehaviour
 
         option.OnValueChangedUntyped += onValueChangedUntypedDelegate;
         option.OnInfoUpdated += onOptionInfoUpdatedDelegate;
+        option.OnAllowUserEditsUpdated += onAllowUserEditsUpdated;
     }
+
     private void UnsubscribeFromOption()
     {
         if (option == null || onValueChangedUntypedDelegate == null)
@@ -380,7 +486,9 @@ public class OptionComponent : MonoBehaviour
 
         option.OnValueChangedUntyped -= onValueChangedUntypedDelegate;
         option.OnInfoUpdated -= onOptionInfoUpdatedDelegate;
+        option.OnAllowUserEditsUpdated -= onAllowUserEditsUpdated;
     }
+
     private void OnOptionInfoUpdated(BaseOption option)
     {
         if (title != null)
@@ -392,26 +500,32 @@ public class OptionComponent : MonoBehaviour
         if (option is ButtonOption)
             UpdateUIFromOption();
     }
+
     private void OnValueChangedUntyped(object oldValue, object newValue)
     {
         UpdateUIFromOption();
     }
+
     private void OnEndIntEdit(string newValue) // TODO combine all of these methods
     {
         OnNumberEdit(newValue);
     }
+
     private void OnEndFloatEdit(string newValue)
     {
         OnNumberEdit(newValue);
     }
+
     private void OnSliderValue(float newValue)
     {
         OnNumberEdit(newValue.ToString());
     }
+
     private void OnEndSliderEdit(string newValue)
     {
         OnNumberEdit(newValue);
     }
+
     private void OnNumberEdit(string newValue)
     {
         if (slider == null || option == null || newValue.Length == 0 || sliderInputField == null)
@@ -421,7 +535,14 @@ public class OptionComponent : MonoBehaviour
         {
             int intParse;
 
-            if (int.TryParse(newValue, System.Globalization.NumberStyles.Float, null, out intParse))
+            if (
+                int.TryParse(
+                    newValue,
+                    System.Globalization.NumberStyles.Integer,
+                    null,
+                    out intParse
+                )
+            )
             {
                 option.SetValue(intParse);
             }
@@ -430,12 +551,20 @@ public class OptionComponent : MonoBehaviour
         {
             float floatParse;
 
-            if (float.TryParse(newValue, System.Globalization.NumberStyles.Float, null, out floatParse))
+            if (
+                float.TryParse(
+                    newValue,
+                    System.Globalization.NumberStyles.Float,
+                    null,
+                    out floatParse
+                )
+            )
             {
                 option.SetValue(floatParse);
             }
         }
     }
+
     private void OnToggle(bool newValue)
     {
         if (option == null)
@@ -444,6 +573,7 @@ public class OptionComponent : MonoBehaviour
         option.SetValue(newValue);
         UpdateBoolInput(newValue);
     }
+
     private void UpdateBoolInput(bool newValue)
     {
         if (boolText == null || boolToggle == null)
@@ -453,6 +583,7 @@ public class OptionComponent : MonoBehaviour
         boolText.SetText(newValue ? boolEnabledText : boolDisabledText);
         boolText.color = (newValue ? boolEnabledColor : boolDisabledColor);
     }
+
     private void OnEndStringEdit(string newValue)
     {
         if (option == null || stringInputField == null || newValue == null)
@@ -460,13 +591,26 @@ public class OptionComponent : MonoBehaviour
 
         option.SetValue(newValue);
     }
+
     private void OnButtonClick()
     {
+        if (option == null)
+            return;
+
         var buttonOption = option as ButtonOption;
 
         if (buttonOption != null)
             buttonOption.Click();
     }
+
+    private void OnDropdownChanged(int newValue)
+    {
+        if (option == null)
+            return;
+
+        option.SetValue(newValue);
+    }
+
     //[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private void OnKeybindButtonClick()
     {
@@ -480,6 +624,7 @@ public class OptionComponent : MonoBehaviour
         HotkeyListener.OnCancelHotkey += new Action(OnCancelHotkey);
         HotkeyListener.BeginListen();
     }
+
     private void OnHotkey(KeyCode[] keyCodes)
     {
         var hotkeyButton = option as KeybindOption;
@@ -487,6 +632,7 @@ public class OptionComponent : MonoBehaviour
         if (hotkeyButton != null)
             hotkeyButton.SetValue(keyCodes);
     }
+
     private void OnCancelHotkey()
     {
         var hotkeyButton = option as KeybindOption;
@@ -497,8 +643,6 @@ public class OptionComponent : MonoBehaviour
     #endregion
 
     #region Helpers
-    private void HotkeyButtonReroute()
-    {
-    }
+    private void HotkeyButtonReroute() { }
     #endregion
 }

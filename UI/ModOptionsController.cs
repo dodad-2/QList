@@ -1,16 +1,18 @@
 namespace QList.UI;
 
-using MelonLoader;
-using UnityEngine;
 using Il2CppInterop.Runtime;
 using Il2CppTMPro;
+using MelonLoader;
+using QList.OptionTypes;
+using UnityEngine;
 
 [RegisterTypeInIl2Cpp]
 public class ModOptionsController : MonoBehaviour
 {
     #region Variables
     private static readonly string defaultTitle = "Select a mod to configure";
-    private static readonly string titleString = "{0} <size=20><color=orange>{1} </color></size><size=16>by {2}</size>";
+    private static readonly string titleString =
+        "{0} <size=20><color=orange>{1} </color></size><size=16>by {2}</size>";
     public static ModOptionsController? Instance;
 
     private static ModOptionContainer? focus;
@@ -25,7 +27,9 @@ public class ModOptionsController : MonoBehaviour
     #endregion
 
     #region Unity Methods
-    public ModOptionsController(IntPtr ptr) : base(ptr) { }
+    public ModOptionsController(IntPtr ptr)
+        : base(ptr) { }
+
     public void Awake()
     {
         if (Instance != null)
@@ -35,6 +39,7 @@ public class ModOptionsController : MonoBehaviour
 
         FindPrefabs();
     }
+
     public void OnDisable()
     {
         ClearOptions();
@@ -50,14 +55,27 @@ public class ModOptionsController : MonoBehaviour
         descriptionPrefab = content.GetChild(2).GetComponent<RectTransform>();
         titleText = transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>();
     }
+
     private void UpdateOptions()
     {
-        if (focus == null || titleText == null || content == null || categoryPrefab == null || optionPrefab == null || descriptionPrefab == null)
+        if (
+            focus == null
+            || titleText == null
+            || content == null
+            || categoryPrefab == null
+            || optionPrefab == null
+            || descriptionPrefab == null
+        )
             return;
 
         ClearOptions();
 
-        titleText.text = String.Format(titleString, focus.mod.Info.Name, focus.mod.Info.Version, focus.mod.Info.Author);//$"{focus.mod.Info.Name} <size=20>{focus.mod.Info.Version}</size> <size=18>by</size> <size=20>{focus.mod.Info.Author}</size>";
+        titleText.text = String.Format(
+            titleString,
+            focus.mod.Info.Name,
+            focus.mod.Info.Version,
+            focus.mod.Info.Author
+        ); //$"{focus.mod.Info.Name} <size=20>{focus.mod.Info.Version}</size> <size=18>by</size> <size=20>{focus.mod.Info.Author}</size>";
 
         List<string> categories = new List<string>();
         var options = focus.GetOptions();
@@ -83,7 +101,9 @@ public class ModOptionsController : MonoBehaviour
 
             foreach (var option in options.Where(x => x.category.Equals(category)))
             {
-                newOptionComponent = GameObject.Instantiate(optionPrefab).GetComponent<OptionComponent>();
+                newOptionComponent = GameObject
+                    .Instantiate(optionPrefab)
+                    .GetComponent<OptionComponent>();
                 newOptionComponent.name = $"(Option) {option.name}";
                 newOptionComponent.transform.SetParent(content, false);
                 newOptionComponent.gameObject.SetActive(true);
@@ -93,7 +113,9 @@ public class ModOptionsController : MonoBehaviour
 
                 if (option.description != null && option.description.Length > 0)
                 {
-                    newDescription = GameObject.Instantiate(descriptionPrefab).GetComponent<RectTransform>();
+                    newDescription = GameObject
+                        .Instantiate(descriptionPrefab)
+                        .GetComponent<RectTransform>();
                     newDescription.name = $"(Description) {option.name}";
                     newDescription.SetParent(content, false);
                     newDescription.gameObject.SetActive(true);
@@ -105,6 +127,7 @@ public class ModOptionsController : MonoBehaviour
             }
         }
     }
+
     private void ClearOptions()
     {
         if (content == null || titleText == null)
@@ -112,7 +135,11 @@ public class ModOptionsController : MonoBehaviour
 
         titleText.text = defaultTitle;
 
-        foreach (var button in content.GetComponentsInChildren<RectTransform>().Where(x => !x.name.Equals("Content")))
+        foreach (
+            var button in content
+                .GetComponentsInChildren<RectTransform>()
+                .Where(x => !x.name.Equals("Content"))
+        )
             GameObject.Destroy(button.gameObject);
     }
     #endregion

@@ -52,6 +52,7 @@ Option types are located at `QList.OptionTypes`. Currently available:
 - StringOption
 - ButtonOption
 - KeybindOption
+- DropdownOption
 
 # Known Issues
 
@@ -65,9 +66,12 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
-**0.1.2**
+**0.2.0**
 
+- Options: User editing of options can now be toggled via `BaseOption.AllowUserEdits` and listeners are notified of this change via `BaseOption.OnAllowUserEditsUpdated`. This field does not affect `BaseOption.SetValue` and manual changes are always applied
+- Options: Added `DropdownOption`
 - Options: `KeybindOption` properly updates when the MelonPreference value is changed
+- Options: Sliders without a MelonEntry properly load and save values
 
 **0.1.1**
 
