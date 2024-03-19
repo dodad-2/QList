@@ -32,6 +32,8 @@ A new `Mod Options` button will be visible in the main menu settings or the inga
 
 3. Call `QList.Options.AddOption(myOption)`. Note that any values not provided here will be pulled from the Preference in the Option. Description must be set here or in the preference to appear in the menu.
 
+4. Optionally review the <a href="https://github.com/dodad-2/SilicaTemplate">Template Mod</a> for a few examples
+
 ## Melon Preferences
 
 To link a MelonPreference to an option you only need to pass a `MelonPreferences_Entry` reference to an appropriate option's constructor. Passing a null reference will create a non-persistent option.

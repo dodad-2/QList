@@ -430,7 +430,7 @@ public class ButtonOption : BaseOption
         get { return buttonName; }
         set
         {
-            buttonName = (value == null || value.Length == 0) ? defaultButtonName : value;
+            buttonName = (value == null || value.Length == 0) ? defaultButtonName : value; // TODO Why isn't this default behavior?
 
             OnInfoUpdated?.Invoke(this);
         }
