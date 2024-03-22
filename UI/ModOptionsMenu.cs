@@ -105,7 +105,7 @@ public class ModOptionsMenu : MonoBehaviour
 
         if (fonts == null || fonts.Count() == 0)
         {
-            Log.LogOutput($"Unable to query fonts", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to query fonts", Log.ELevel.Warning);
             return;
         }
 
@@ -113,7 +113,7 @@ public class ModOptionsMenu : MonoBehaviour
 
         if (fontSearch == null || fontSearch.First() == null)
         {
-            Log.LogOutput($"Unable to find font (1)", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to find font (1)", Log.ELevel.Warning);
             return;
         }
 
@@ -122,7 +122,7 @@ public class ModOptionsMenu : MonoBehaviour
 
         if (font == null)
         {
-            Log.LogOutput($"Unable to find font (2)", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to find font (2)", Log.ELevel.Warning);
             return;
         }
 

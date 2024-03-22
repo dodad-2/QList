@@ -1,9 +1,8 @@
 namespace QList;
 
-using QList.OptionTypes;
-
-using MelonLoader;
 using System.Reflection;
+using MelonLoader;
+using QList.OptionTypes;
 
 public static class Options
 {
@@ -15,7 +14,7 @@ public static class Options
     {
         if (mod == null)
         {
-            Log.LogOutput($"Unable to register mod: ensure mod is not null", Log.LogLevel.Error);
+            Log.LogOutput($"Unable to register mod: ensure mod is not null", Log.ELevel.Error);
             return;
         }
 
@@ -23,23 +22,29 @@ public static class Options
 
         if (CurrentModOptions.ContainsKey(key))
         {
-            Log.LogOutput($"Unable to register '{mod.Info.Name}': mod already registered", Log.LogLevel.Warning);
+            Log.LogOutput(
+                $"Unable to register '{mod.Info.Name}': mod already registered",
+                Log.ELevel.Warning
+            );
             return;
         }
 
-        CurrentModOptions.Add(key, new ModOptionContainer(mod, System.Reflection.Assembly.GetCallingAssembly()));
+        CurrentModOptions.Add(
+            key,
+            new ModOptionContainer(mod, System.Reflection.Assembly.GetCallingAssembly())
+        );
 
         if (initialized) // Only sort after LateInitialize
             SortModList();
 
-        Log.LogOutput($"Registered mod: '{mod.Info.Name}'", Log.LogLevel.Message);
+        Log.LogOutput($"Registered mod: '{mod.Info.Name}'", Log.ELevel.Message);
     }
 
     public static void DeregisterMod(MelonMod mod)
     {
         if (mod == null)
         {
-            Log.LogOutput($"Unable to deregister mod: ensure mod is not null", Log.LogLevel.Error);
+            Log.LogOutput($"Unable to deregister mod: ensure mod is not null", Log.ELevel.Error);
             return;
         }
 
@@ -47,7 +52,10 @@ public static class Options
 
         if (!CurrentModOptions.ContainsKey(key))
         {
-            Log.LogOutput($"Unable to deregister '{mod.Info.Name}': mod not registered", Log.LogLevel.Warning);
+            Log.LogOutput(
+                $"Unable to deregister '{mod.Info.Name}': mod not registered",
+                Log.ELevel.Warning
+            );
             return;
         }
 
@@ -55,8 +63,9 @@ public static class Options
 
         SortModList();
 
-        Log.LogOutput($"Deregistered mod: '{mod.Info.Name}'", Log.LogLevel.Message);
+        Log.LogOutput($"Deregistered mod: '{mod.Info.Name}'", Log.ELevel.Message);
     }
+
     /// <summary>
     /// Adds an option for a registered mod.
     /// </summary>
@@ -64,11 +73,16 @@ public static class Options
     /// <param name="description">Used if no MelonPreference exists in the given option</param>
     /// <param name="category">Used if no MelonPreference exists in the given option</param>
     /// <returns>False if unable to add option</returns>
-    public static bool AddOption(BaseOption option, string? name = "", string? description = "", string? category = "")
+    public static bool AddOption(
+        BaseOption option,
+        string? name = "",
+        string? description = "",
+        string? category = ""
+    )
     {
         if (option == null)
         {
-            Log.LogOutput($"Unable to add option: option is null", Log.LogLevel.Warning);
+            Log.LogOutput($"Unable to add option: option is null", Log.ELevel.Warning);
             return false;
         }
 
@@ -78,7 +92,10 @@ public static class Options
 
         if (search == null || search.Count() == 0)
         {
-            Log.LogOutput($"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly})", Log.LogLevel.Warning);
+            Log.LogOutput(
+                $"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly})",
+                Log.ELevel.Warning
+            );
             return false;
         }
 
@@ -86,7 +103,10 @@ public static class Options
 
         if (container == null || !container.HasValue)
         {
-            Log.LogOutput($"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly}", Log.LogLevel.Warning);
+            Log.LogOutput(
+                $"Unable to add option '{option.name}': Mod {assembly.GetName()} not registered. Call Options.RegisterMod first. ({assembly}",
+                Log.ELevel.Warning
+            );
             return false;
         }
 
@@ -101,6 +121,7 @@ public static class Options
 
         return true;
     }
+
     internal static void SortModList()
     {
         var sortedKeys = CurrentModOptions.Keys.ToList();
@@ -115,6 +136,7 @@ public static class Options
 
         initialized = true;
     }
+
     internal static void SubscribeOnUpdate(BaseOption option)
     {
         if (OnUpdateListeners.Contains(option))
@@ -122,6 +144,7 @@ public static class Options
 
         OnUpdateListeners.Add(option);
     }
+
     public static void UnsubscribeOnUpdate(BaseOption option)
     {
         if (!OnUpdateListeners.Contains(option))
@@ -129,6 +152,7 @@ public static class Options
 
         OnUpdateListeners.Remove(option);
     }
+
     internal static void OnUpdate()
     {
         foreach (var option in OnUpdateListeners)
@@ -142,10 +166,7 @@ internal class ModOptionContainer
     #region Variables & Constructor
     public bool IsDirty
     {
-        get
-        {
-            return dirty;
-        }
+        get { return dirty; }
     }
 
     public Assembly assembly;
@@ -167,6 +188,7 @@ internal class ModOptionContainer
         options.Add(option);
         dirty = true;
     }
+
     public System.Collections.ObjectModel.ReadOnlyCollection<BaseOption> GetOptions()
     {
         dirty = false;

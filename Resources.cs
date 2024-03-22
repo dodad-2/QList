@@ -1,13 +1,10 @@
-using Il2CppInterop.Runtime;
-using UnityEngine;
-using UnityEngine.UI;
 using System.Reflection;
+using UnityEngine;
 
 namespace QList;
 
-internal static class Resources // TODO rewrite this
+internal static class Resources
 {
-    //private static Dictionary<string, Sprite> bundleSprites;
     internal static Dictionary<string, Texture2D>? BundleTextures;
     internal static Il2CppAssetBundle? Bundle;
 
@@ -17,7 +14,7 @@ internal static class Resources // TODO rewrite this
 
     #region Bundles
     /// <summary>
-    /// Makes bundles available to other mods
+    /// This feature has been moved to QAPI but remains here to allow QList to run independently
     /// </summary>
     public static bool RegisterBundle(Assembly assembly, string name)
     {
@@ -26,18 +23,21 @@ internal static class Resources // TODO rewrite this
 
         if (BundleHash.ContainsKey(name))
         {
-            Log.LogOutput($"Bundle '{name}' already loaded", Log.LogLevel.Warning);
+            Log.LogOutput($"Bundle '{name}' already loaded", Log.ELevel.Warning);
             return false;
         }
 
         try
         {
-            Il2CppAssetBundle bundle = null;
+            Il2CppAssetBundle? bundle = null;
 
-            Log.LogOutput($"Loading '{name}' from assembly '{assembly.FullName}'", Log.LogLevel.Debug);
+            Log.LogOutput(
+                $"Loading '{name}' from assembly '{assembly.FullName}'",
+                Log.ELevel.Debug
+            );
 
             foreach (string fileName in assembly.GetManifestResourceNames())
-                Log.LogOutput($"Resource name: {fileName}", Log.LogLevel.Debug);
+                Log.LogOutput($"Resource name: {fileName}", Log.ELevel.Debug);
 
             MemoryStream memoryStream;
 
@@ -53,22 +53,23 @@ internal static class Resources // TODO rewrite this
 
             if (bundle == null)
             {
-                Log.LogOutput($"Unable to load '{name}'.", Log.LogLevel.Warning);
+                Log.LogOutput($"Unable to load '{name}'.", Log.ELevel.Warning);
             }
             else
             {
                 BundleHash.Add(name, bundle);
-                Log.LogOutput($"Registered bundle '{name}'", Log.LogLevel.Info);
+                Log.LogOutput($"Registered bundle '{name}'", Log.ELevel.Info);
             }
         }
         catch (Exception e)
         {
-            Log.LogOutput(e, Log.LogLevel.Error);
+            Log.LogOutput(e, Log.ELevel.Error);
             return false;
         }
 
         return true;
     }
+
     public static Il2CppAssetBundle GetBundle(string key)
     {
         return BundleHash[key];
@@ -76,13 +77,16 @@ internal static class Resources // TODO rewrite this
     #endregion
     public static void Initialize()
     {
-        if (!RegisterBundle(System.Reflection.Assembly.GetExecutingAssembly(), Mod.bundleKey))
+        if (!RegisterBundle(System.Reflection.Assembly.GetExecutingAssembly(), QListMod.BundleKey))
         {
-            Log.LogOutput($"Unable to initialize resources: Cannot register bundle", Log.LogLevel.Error);
+            Log.LogOutput(
+                $"Unable to initialize resources: Cannot register bundle",
+                Log.ELevel.Error
+            );
             return;
         }
 
-        Bundle = GetBundle(Mod.bundleKey);
+        Bundle = GetBundle(QListMod.BundleKey);
 
         if (Bundle == null)
         {
@@ -106,7 +110,7 @@ internal static class Resources // TODO rewrite this
 
         if (textures == null || textures.Length == 0)
         {
-            Log.LogOutput($"No textures loaded", Log.LogLevel.Debug);
+            Log.LogOutput($"No textures loaded", Log.ELevel.Debug);
             return;
         }
 
@@ -128,101 +132,6 @@ internal static class Resources // TODO rewrite this
             BundleTextures.Add(uid, texture);
             Log.LogOutput($"Loaded texture '{uid}'");
         }
-    }
-    private static void CreateSpritesFromBundle()
-    {
-        /*
-        if (bundle == null)
-        {
-            Log($"Unable to create sprites: Bundle is null", QLibrary.Log.LogLevel.Warning);
-            return;
-        }
-
-        Sprite[] sprites = null;
-
-        var textures = bundle.LoadAllAssets<Texture2D>();
-
-        if (textures.Length == 0)
-        {
-            Log($"Unable to create sprites: No textures found in '{bundle.mainAsset.name}'", QLibrary.Log.LogLevel.Message);
-            return;
-        }
-
-        sprites = new Sprite[textures.Length];
-
-        for (int e = 0; e < textures.Length; e++)
-        {
-            sprites[e] = Sprite.Create(textures[e], new Rect(Vector2.zero, new Vector2(textures[e].width, textures[e].height)), Vector2.zero);
-            sprites[e].name = textures[e].name;
-        }
-
-        bundleSprites = new();
-
-        int idAppend = 0;
-        string key;
-
-        foreach (var sprite in sprites)
-        {
-            key = sprite.name;
-
-            while (bundleSprites.ContainsKey(key))
-            {
-                idAppend++;
-                key = $"{key}{idAppend}";
-            }
-
-            bundleSprites.Add(key, sprite);
-
-            Log($"Loaded Sprite '{key}'");
-        }*/
-    }
-    #endregion
-
-    #region Access
-    /// <summary>
-    /// Deprecated
-    /// </summary>
-    public static Sprite GetSprite(string name)
-    {
-        return null;
-        /*
-        if (bundleSprites == null)
-            Initialize();
-
-        if (bundleSprites == null || !bundleSprites.ContainsKey(name))
-            return null;
-
-        return bundleSprites[name];
-        */
-    }
-    public static Texture2D? GetTexture(string name)
-    {
-        if (BundleTextures == null || !BundleTextures.ContainsKey(name))
-            return null;
-
-        return BundleTextures[name];
-    }
-    #endregion
-
-    #region Helpers
-    public static Image? CreateImageFromTexture(string name, Texture2D texture)
-    {
-        if (texture == null)
-        {
-            Log.LogOutput($"Unable to create image from sprite with uid '{name}'");
-            return null;
-        }
-
-        var imageObject = new GameObject($"(Image) {name}");
-
-        var imageComponent = imageObject.AddComponent<Image>();
-        imageComponent.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one / 2f, 100f, 0);
-
-        GameObject.DontDestroyOnLoad(imageObject);
-
-        imageObject.SetActive(false);
-
-        return imageComponent;
     }
     #endregion
 }

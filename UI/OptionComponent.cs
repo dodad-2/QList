@@ -6,8 +6,6 @@ using QList.OptionTypes;
 using UnityEngine;
 using UnityEngine.UI;
 
-//using System.Runtime.CompilerServices;
-
 [RegisterTypeInIl2Cpp]
 public class OptionComponent : MonoBehaviour
 {
@@ -497,7 +495,7 @@ public class OptionComponent : MonoBehaviour
         if (description != null)
             description.SetText(option.description);
 
-        if (option is ButtonOption)
+        if (option is ButtonOption || option is DropdownOption)
             UpdateUIFromOption();
     }
 

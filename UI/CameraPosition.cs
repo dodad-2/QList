@@ -6,8 +6,10 @@ using UnityEngine;
 [RegisterTypeInIl2Cpp]
 public class CameraPosition : MonoBehaviour
 {
-    public Vector3 originalPosition, targetPosition;
-    public Quaternion originalRotation, targetRotation;
+    public Vector3 originalPosition,
+        targetPosition;
+    public Quaternion originalRotation,
+        targetRotation;
     public Il2Cpp.FollowCursorCameraController? followController;
 
     public bool reposition;
@@ -38,8 +40,16 @@ public class CameraPosition : MonoBehaviour
             if (followController.enabled)
                 followController.enabled = false;
 
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * moveSpeed);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            transform.position = Vector3.Lerp(
+                transform.position,
+                targetPosition,
+                Time.deltaTime * moveSpeed
+            );
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                Time.deltaTime * rotationSpeed
+            );
         }
         else
         {
@@ -49,7 +59,11 @@ public class CameraPosition : MonoBehaviour
                 followController.enabled = true;
             }
 
-            transform.position = Vector3.Lerp(transform.position, originalPosition, Time.deltaTime * moveSpeed);
+            transform.position = Vector3.Lerp(
+                transform.position,
+                originalPosition,
+                Time.deltaTime * moveSpeed
+            );
         }
     }
 }

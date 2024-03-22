@@ -1,9 +1,7 @@
 namespace QList.UI;
 
-using Il2CppInterop.Runtime;
 using Il2CppTMPro;
 using MelonLoader;
-using QList.OptionTypes;
 using UnityEngine;
 
 [RegisterTypeInIl2Cpp]
@@ -154,7 +152,7 @@ public class ModOptionsController : MonoBehaviour
 
         if (search == null || search.Count() == 0)
         {
-            Log.LogOutput($"Mod '{mod}' not registered", Log.LogLevel.Warning);
+            Log.LogOutput($"Mod '{mod}' not registered", Log.ELevel.Warning);
             return;
         }
 

@@ -1,11 +1,9 @@
+using HarmonyLib;
+using Il2CppInterop.Runtime;
+using Il2CppTMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Il2Cpp;
-using HarmonyLib;
-using Il2CppTMPro;
-
-using Il2CppInterop.Runtime;
 
 namespace QList.UI;
 
@@ -24,18 +22,23 @@ internal static class Manager
         }
     }
     internal static Dictionary<string, Image>? ExistingImagePrefabHash = new();
-    private static GameObject? container, mainMenuOptions, ingameOptions, ingameLogo;
-    private static Button? mainMenuModOptionsButton, pauseMenuButton;
+    private static GameObject? container,
+        mainMenuOptions,
+        ingameOptions,
+        ingameLogo;
+    private static Button? mainMenuModOptionsButton,
+        pauseMenuButton;
     private static Il2CppSilica.UI.PauseMenu? PauseMenuInstance;
     #endregion
 
     #region Init / Uninit
     internal static void Initialize()
     {
-        Log.LogOutput($"Manager initializing..", Log.LogLevel.Info);
+        Log.LogOutput($"Manager initializing..", Log.ELevel.Info);
         CreateAssets();
         CreateModOptionsMenu();
     }
+
     internal static void Uninitialize()
     {
         // Necessary?
@@ -47,25 +50,27 @@ internal static class Manager
     {
         CreateImagePrefabsFromExisting();
     }
+
     private static void CreateImagePrefabsFromExisting()
     {
         ExistingImagePrefabHash = new();
 
-        string[] textureNames = new string[]
-        {
-            "window_md",
-        };
+        string[] textureNames = new string[] { "window_md", };
 
         var textures = GameObject.FindObjectsOfTypeAll(Il2CppType.Of<Texture2D>());
         Image? current;
 
         if (textures == null)
         {
-            Log.LogOutput("Unable to load sprites", Log.LogLevel.Error);
+            Log.LogOutput("Unable to load sprites", Log.ELevel.Error);
             return;
         }
 
-        foreach (var textureResource in textures.ToArray().Where(x => x != null && textureNames.Contains(x.name)))
+        foreach (
+            var textureResource in textures
+                .ToArray()
+                .Where(x => x != null && textureNames.Contains(x.name))
+        )
         {
             if (textureResource == null)
                 continue;
@@ -74,7 +79,10 @@ internal static class Manager
 
             if (texture == null)
             {
-                Log.LogOutput($"Unable to create sprite for {textureResource.name}", Log.LogLevel.Error);
+                Log.LogOutput(
+                    $"Unable to create sprite for {textureResource.name}",
+                    Log.ELevel.Error
+                );
                 continue;
             }
 
@@ -88,19 +96,45 @@ internal static class Manager
                 id++;
             }
 
-            Log.LogOutput($"Creating Image prefab for {uid}", Log.LogLevel.Info);
+            Log.LogOutput($"Creating Image prefab for {uid}", Log.ELevel.Info);
 
-            current = Resources.CreateImageFromTexture(uid, texture);
+            current = CreateImageFromTexture(uid, texture);
 
             if (current == null)
             {
-                Log.LogOutput($"Unable to create image for '{uid}'", Log.LogLevel.Error);
+                Log.LogOutput($"Unable to create image for '{uid}'", Log.ELevel.Error);
                 continue;
             }
 
             current.transform.SetParent(Container.transform);
             ExistingImagePrefabHash.Add(uid, current);
         }
+    }
+
+    public static Image? CreateImageFromTexture(string name, Texture2D texture)
+    {
+        if (texture == null)
+        {
+            Log.LogOutput($"Unable to create image from sprite with uid '{name}'");
+            return null;
+        }
+
+        var imageObject = new GameObject($"(Image) {name}");
+
+        var imageComponent = imageObject.AddComponent<Image>();
+        imageComponent.sprite = Sprite.Create(
+            texture,
+            new Rect(0, 0, texture.width, texture.height),
+            Vector2.one / 2f,
+            100f,
+            0
+        );
+
+        GameObject.DontDestroyOnLoad(imageObject);
+
+        imageObject.SetActive(false);
+
+        return imageComponent;
     }
     #endregion
 
@@ -115,6 +149,7 @@ internal static class Manager
             //Log.LogOutput($"PauseMenu_CloseScreen: Postfix {(__instance != null ? __instance.name : "null")}");
         }
     }
+
     [HarmonyPatch(typeof(Il2CppSilica.UI.PauseMenu), nameof(Il2CppSilica.UI.PauseMenu.Toggle))]
     private static class PauseMenu_Toggle
     {
@@ -126,6 +161,7 @@ internal static class Manager
             //Log.LogOutput($"PauseMenu_Toggle: Postfix {(__instance != null ? __instance.name : "null")}");
         }
     }
+
     [HarmonyPatch(typeof(Il2CppSilica.UI.MainMenu), nameof(Il2CppSilica.UI.MainMenu.CloseScreen))]
     private static class MainMenu_CloseScreen
     {
@@ -136,17 +172,25 @@ internal static class Manager
             //Log.LogOutput($"MainMenu_CloseScreen: Postfix {type}");
         }
     }
+
     [HarmonyPatch(typeof(Il2CppSilica.UI.MainMenu), nameof(Il2CppSilica.UI.MainMenu.OpenScreen))]
     private static class MainMenu_OpenScreen
     {
-        private static void Postfix(Il2CppSilica.UI.MainMenu __instance, Il2CppSilica.UI.MenuScreenType type)
+        private static void Postfix(
+            Il2CppSilica.UI.MainMenu __instance,
+            Il2CppSilica.UI.MenuScreenType type
+        )
         {
-            if (SceneManager.GetActiveScene().name.ToLower().Contains("menu") && type == Il2CppSilica.UI.MenuScreenType.None)
+            if (
+                SceneManager.GetActiveScene().name.ToLower().Contains("menu")
+                && type == Il2CppSilica.UI.MenuScreenType.None
+            )
                 __instance.OpenScreen(Il2CppSilica.UI.MenuScreenType.Intro);
 
             //Log.LogOutput($"MainMenu_OpenScreen: Postfix {type}");
         }
     }
+
     [HarmonyPatch(typeof(Il2CppSilica.UI.UIManager), nameof(Il2CppSilica.UI.UIManager.Awake))]
     private static class UIManager_Awake
     {
@@ -167,7 +211,10 @@ internal static class Manager
     #region UI
     public static void SetModOptionsMenuEnabled(bool state)
     {
-        if (Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main) && mainMenuOptions != null)
+        if (
+            Il2CppSilica.UI.MenuManager.Instance.IsMenuOpen(Il2CppSilica.UI.MenuType.Main)
+            && mainMenuOptions != null
+        )
         {
             mainMenuOptions?.SetActive(!state);
         }
@@ -187,6 +234,7 @@ internal static class Manager
         else
             ModOptionsMenu.Close();
     }
+
     public static void ToggleModOptionsMenuEnabled()
     {
         if (ModOptionsMenu.Instance == null)
@@ -197,11 +245,12 @@ internal static class Manager
         else
             SetModOptionsMenuEnabled(true);
     }
+
     private static void CreateModOptionsMenu()
     {
         if (Resources.Bundle == null)
         {
-            Log.LogOutput($"Unable to create mod options menu: bundle is null", Log.LogLevel.Error);
+            Log.LogOutput($"Unable to create mod options menu: bundle is null", Log.ELevel.Error);
             return;
         }
 
@@ -209,39 +258,58 @@ internal static class Manager
 
         if (options == null)
         {
-            Log.LogOutput($"Unable to create mod options menu: prefab not found", Log.LogLevel.Error);
+            Log.LogOutput($"Unable to create mod options menu: prefab not found", Log.ELevel.Error);
             return;
         }
 
         options = GameObject.Instantiate(options);
         options.transform.SetParent(Container.transform, false);
     }
+
     private static void CreateContainer()
     {
         container = new GameObject("(QList) Manager Resources", Il2CppType.Of<RectTransform>());
         GameObject.DontDestroyOnLoad(container);
     }
+
     private static void ModifyPauseMenu()
     {
-        var pauseMenu = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.PauseMenu>();
+        var pauseMenu =
+            Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.PauseMenu>();
 
         if (pauseMenu != null)
         {
             ingameOptions = pauseMenu.Screens[0].gameObject;
 
-            ingameLogo = pauseMenu.GetComponentsInChildren<Image>(true).Where(x => x.name.Equals("Logo")).First()?.gameObject;
+            ingameLogo = pauseMenu
+                .GetComponentsInChildren<Image>(true)
+                .Where(x => x.name.Equals("Logo"))
+                .First()
+                ?.gameObject;
 
-            var resumeButtonTemplate = pauseMenu.GetComponentsInChildren<Button>(true).Where(x => x.name.ToLower().Equals("resume")).First().gameObject;
+            var resumeButtonTemplate = pauseMenu
+                .GetComponentsInChildren<Button>(true)
+                .Where(x => x.name.ToLower().Equals("resume"))
+                .First()
+                .gameObject;
 
             if (resumeButtonTemplate != null)
             {
-                pauseMenuButton = GameObject.Instantiate(resumeButtonTemplate).GetComponent<Button>();
+                pauseMenuButton = GameObject
+                    .Instantiate(resumeButtonTemplate)
+                    .GetComponent<Button>();
 
-                pauseMenuButton.transform.SetParent(ingameOptions.transform.parent.GetComponentInChildren<VerticalLayoutGroup>().transform);
+                pauseMenuButton.transform.SetParent(
+                    ingameOptions
+                        .transform.parent.GetComponentInChildren<VerticalLayoutGroup>()
+                        .transform
+                );
                 pauseMenuButton.transform.SetSiblingIndex(2);
 
                 var onEnableNotifier = pauseMenuButton.gameObject.AddComponent<OnEnableNotifier>();
-                onEnableNotifier.OnEnabled += new Action<OnEnableNotifier>(OnEnablePauseMenuNotifier);
+                onEnableNotifier.OnEnabled += new Action<OnEnableNotifier>(
+                    OnEnablePauseMenuNotifier
+                );
 
                 var modsButtonRect = pauseMenuButton.GetComponent<RectTransform>();
 
@@ -249,9 +317,11 @@ internal static class Manager
             }
         }
     }
+
     private static void ModifyMainMenu()
     {
-        var mainMenu = Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.MainMenu>();
+        var mainMenu =
+            Il2CppSilica.UI.MenuManager.Instance.GetComponentInChildren<Il2CppSilica.UI.MainMenu>();
 
         if (mainMenu != null)
         {
@@ -278,15 +348,20 @@ internal static class Manager
 
                 if (modOptionsButton == null)
                 {
-                    Log.LogOutput($"Unable to create main menu button: modsButton is null", Log.LogLevel.Error);
+                    Log.LogOutput(
+                        $"Unable to create main menu button: modsButton is null",
+                        Log.ELevel.Error
+                    );
                     return;
                 }
 
-                var mainMenuOptionsSearch = mainMenu.GetComponentsInChildren<Il2CppSilica.UI.OptionsForm>(true).Where(x => x.name.ToLower().Equals("options"));
+                var mainMenuOptionsSearch = mainMenu
+                    .GetComponentsInChildren<Il2CppSilica.UI.OptionsForm>(true)
+                    .Where(x => x.name.ToLower().Equals("options"));
 
                 if (mainMenuOptionsSearch == null || mainMenuOptionsSearch.Count() == 0)
                 {
-                    Log.LogOutput($"Unable to find main menu OptionsForm", Log.LogLevel.Error);
+                    Log.LogOutput($"Unable to find main menu OptionsForm", Log.ELevel.Error);
                     return;
                 }
 
@@ -295,7 +370,11 @@ internal static class Manager
                 modOptionsButton.transform.SetParent(mainMenuOptions.transform.parent);
 
                 var modsButtonRect = modOptionsButton.GetComponent<RectTransform>();
-                modsButtonRect.localPosition = new Vector3(modsButtonRect.localPosition.x, modsButtonRect.localPosition.y + 100f, 0);
+                modsButtonRect.localPosition = new Vector3(
+                    modsButtonRect.localPosition.x,
+                    modsButtonRect.localPosition.y + 100f,
+                    0
+                );
 
                 FormatButton(modOptionsButton);
 
@@ -316,20 +395,24 @@ internal static class Manager
                 ModOptionsController.ShowOptionsFor(ModOptionsController.lastMod);
         }
     }
+
     private static void OnClickCloseModOptionsMenu()
     {
         if (ModOptionsMenu.Instance != null && ModOptionsMenu.Instance.gameObject.activeSelf)
             SetModOptionsMenuEnabled(false);
     }
+
     private static void SetMainMenuOptionsVisibility(bool state)
     {
         mainMenuOptions?.SetActive(state);
     }
+
     private static void SetIngameMenuOptionsVisibility(bool state)
     {
         ingameOptions?.SetActive(state);
         ingameLogo?.SetActive(state);
     }
+
     private static void FormatButton(Button button)
     {
         button.name = modButtonText;

@@ -1,11 +1,10 @@
 namespace QList.UI;
 
+using Il2CppInterop.Runtime;
+using Il2CppTMPro;
 using MelonLoader;
 using UnityEngine;
-using Il2CppInterop.Runtime;
 using UnityEngine.UI;
-using MelonLoader;
-using Il2CppTMPro;
 
 [RegisterTypeInIl2Cpp]
 public class ModListController : MonoBehaviour
@@ -17,16 +16,20 @@ public class ModListController : MonoBehaviour
     #endregion
 
     #region Unity Methods
-    public ModListController(IntPtr ptr) : base(ptr) { }
+    public ModListController(IntPtr ptr)
+        : base(ptr) { }
+
     public void Awake()
     {
         listButtonPrefab = transform.GetComponentInChildren<Button>(true);
         content = transform.GetComponentInChildren<VerticalLayoutGroup>().transform;
     }
+
     public void OnEnable()
     {
         RefreshList();
     }
+
     public void OnDisable()
     {
         ClearList();
@@ -38,16 +41,24 @@ public class ModListController : MonoBehaviour
     {
         if (listButtonPrefab == null || content == null)
         {
-            Log.LogOutput($"Unable to display mod list: prefab or content is null", Log.LogLevel.Error);
+            Log.LogOutput(
+                $"Unable to display mod list: prefab or content is null",
+                Log.ELevel.Error
+            );
             return;
         }
 
         foreach (var mod in Options.CurrentModOptions)
             CreateModButton(mod.Value.mod.Info.Name, mod.Key);
     }
+
     public void ClearList()
     {
-        foreach (var button in content.GetComponentsInChildren<RectTransform>().Where(x => !x.name.Equals("Content") && !x.name.Equals("Name")))
+        foreach (
+            var button in content
+                .GetComponentsInChildren<RectTransform>()
+                .Where(x => !x.name.Equals("Content") && !x.name.Equals("Name"))
+        )
         {
             GameObject.Destroy(button.gameObject);
         }
@@ -59,10 +70,17 @@ public class ModListController : MonoBehaviour
     {
         var modButton = GameObject.Instantiate(listButtonPrefab);
         modButton.transform.SetParent(content, false);
-        modButton.onClick.AddListener(new Action(delegate { ModOptionsController.ShowOptionsFor(key); }));
-        modButton.name = key;//mod.Info.Name;
+        modButton.onClick.AddListener(
+            new Action(
+                delegate
+                {
+                    ModOptionsController.ShowOptionsFor(key);
+                }
+            )
+        );
+        modButton.name = key; //mod.Info.Name;
         TextMeshProUGUI text = modButton.GetComponentInChildren<TextMeshProUGUI>();
-        text.text = name;//mod.Info.Name;
+        text.text = name; //mod.Info.Name;
         modButton.gameObject.SetActive(true);
     }
     #endregion

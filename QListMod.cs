@@ -1,27 +1,29 @@
 ﻿using MelonLoader;
 using QList;
 
-[assembly: MelonInfo(typeof(Mod), "QList", "0.2.0", "dodad")]
+[assembly: MelonInfo(typeof(QListMod), "QList", "0.2.0", "dodad")]
 [assembly: MelonGame("Bohemia Interactive", "Silica")]
 [assembly: MelonPriority(-99)]
+[assembly: MelonColor(100, 255, 180, 100)]
 
 namespace QList;
 
-public class Mod : MelonMod
+public class QListMod : MelonMod
 {
-    public static Mod? Instance;
+    internal static readonly string BundleKey = "QList.qlist_bundle";
 
-    internal static readonly string bundleKey = "QList.qlist_bundle";
+    //internal static readonly string bundleKey = "QList.qlist_bundle";
+
+    internal static QListMod? Instance;
 
     public override void OnInitializeMelon()
     {
         Instance = this;
-
-        PreferencesConfig.SetFilePath(this);
+        Config.SetFilePath(this);
 
         Options.RegisterMod(this);
 
-        if (Log.SetMod(this))
+        if (Log.Enable(this))
         {
             /*
             var firstCategory = MelonPreferences.CreateCategory("Example Category");

@@ -2,29 +2,23 @@ using MelonLoader;
 
 namespace QList;
 
-internal static class Log // TODO rewrite this
+internal static class Log
 {
-    internal static LogLevel logLevel = LogLevel.None;
+    internal static ELevel logLevel = ELevel.None;
     internal static MelonMod? mod;
 
-    internal static bool SetMod(MelonMod newMod, LogLevel logLevel = LogLevel.None)
+    internal static bool Enable(MelonMod newMod, ELevel logLevel = ELevel.None)
     {
-        if (newMod == null)
-        {
-            newMod?.LoggerInstance.Error($"Unable to initialize null mod.");
-            return false;
-        }
-
         mod = newMod;
 
-        var category = MelonPreferences.GetCategory("General");
+        var category = MelonPreferences.GetCategory("Debug");
         MelonPreferences_Entry? entry = null;
 
         if (category == null)
         {
-            category = MelonPreferences.CreateCategory("General");
-            category.SetFilePath(PreferencesConfig.filePath);
-            entry = category.CreateEntry<int>("LOG_LEVEL", 5, "Log Level");
+            category = MelonPreferences.CreateCategory("Debug");
+            category.SetFilePath(Config.FilePath);
+            entry = category.CreateEntry<int>("LOG_LEVEL", 7, "Log Level");
             category.SaveToFile();
         }
 
@@ -40,38 +34,47 @@ internal static class Log // TODO rewrite this
         valueNames[6] = "Debug";
         valueNames[7] = "All";
 
-        var logLevelOption = new OptionTypes.DropdownOption(entry, 7, valueNames);
+        var logLevelOption = new QList.OptionTypes.DropdownOption(entry, 5, valueNames);
         logLevelOption.OnValueChangedUntyped += OnValueUpdatedUntyped;
-        Options.AddOption(logLevelOption);
 
-        Log.logLevel = logLevel == LogLevel.None ? (LogLevel)(int)entry.BoxedValue : logLevel;
+        if (!Options.AddOption(logLevelOption))
+            LogOutput($"Log.Enable: Unable to add QList option!", ELevel.Warning);
+
+        try
+        {
+            Log.logLevel = logLevel == ELevel.None ? (ELevel)(int)entry.BoxedValue : logLevel;
+        }
+        catch (Exception e)
+        {
+            mod?.LoggerInstance.Error($"Log.Enable: {e}");
+        }
 
         return true;
     }
 
-    internal static void LogOutput(object data, LogLevel level = LogLevel.Debug)
+    internal static void LogOutput(object data, ELevel level = ELevel.Debug)
     {
-        if (level > logLevel || logLevel == LogLevel.None || mod == null)
+        if (level > logLevel || logLevel == ELevel.None || mod == null)
             return;
 
         switch (level)
         {
-            case LogLevel.Message:
+            case ELevel.Message:
                 mod.LoggerInstance.Msg($"{data}");
                 break;
-            case LogLevel.Info:
+            case ELevel.Info:
                 mod.LoggerInstance.Msg($"{data}");
                 break;
-            case LogLevel.Warning:
+            case ELevel.Warning:
                 mod.LoggerInstance.Warning($"{data}");
                 break;
-            case LogLevel.Error:
+            case ELevel.Error:
                 mod.LoggerInstance.Error($"{data}");
                 break;
-            case LogLevel.Fatal:
+            case ELevel.Fatal:
                 mod.LoggerInstance.BigError($"{data}");
                 break;
-            case LogLevel.Debug:
+            case ELevel.Debug:
                 mod.LoggerInstance.Msg($"{data}");
                 break;
         }
@@ -79,10 +82,10 @@ internal static class Log // TODO rewrite this
 
     internal static void OnValueUpdatedUntyped(object oldValue, object newValue)
     {
-        logLevel = (LogLevel)Convert.ToInt32(newValue);
+        logLevel = (ELevel)Convert.ToInt32(newValue);
     }
 
-    public enum LogLevel
+    public enum ELevel
     {
         None = 0,
         Message = 1,

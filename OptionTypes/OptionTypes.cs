@@ -120,7 +120,7 @@ public class IntOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}: Could not parse '{Name}': {e}",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
             }
         }
@@ -137,7 +137,7 @@ public class IntOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.GetValue: Could not parse '{Name}': {e}",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
         }
 
@@ -170,7 +170,7 @@ public class IntOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}': {e}",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
         }
     }
@@ -215,7 +215,7 @@ public class FloatOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}: Could not parse '{Name}': {e}",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
             }
         }
@@ -257,7 +257,7 @@ public class FloatOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}':",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
             return;
         }
@@ -286,7 +286,7 @@ public class BoolOption : BaseOption
 
             if (!bool.TryParse(this.entry.BoxedValue.ToString(), out this.currentValue))
             {
-                Log.LogOutput($"{this.GetType()}: Could not parse '{Name}':", Log.LogLevel.Warning);
+                Log.LogOutput($"{this.GetType()}: Could not parse '{Name}':", Log.ELevel.Warning);
             }
         }
     }
@@ -317,7 +317,7 @@ public class BoolOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}.OnValueChanged: Could not parse '{Name}':",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
                 return;
             }
@@ -332,7 +332,7 @@ public class BoolOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}.OnValueChanged: Could not parse '{Name}': {e}",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
                 return;
             }
@@ -372,7 +372,7 @@ public class StringOption : BaseOption
 
             if (boxedString == null)
             {
-                Log.LogOutput($"Could not parse {this.GetType()}'{Name}'", Log.LogLevel.Warning);
+                Log.LogOutput($"Could not parse {this.GetType()}'{Name}'", Log.ELevel.Warning);
                 return currentValue;
             }
 
@@ -409,7 +409,7 @@ public class StringOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}'",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
             return;
         }
@@ -498,7 +498,7 @@ public class KeybindOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse null value '{Name}'",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             ); // TODO ensure this change doesn't cause problems (no longer nullable)
             return;
         }
@@ -509,7 +509,7 @@ public class KeybindOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}'",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
             return;
         }
@@ -583,7 +583,7 @@ public class KeybindOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}.OnValueChanged: Could not parse '{Name}', {e}",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
                 return;
             }
@@ -593,7 +593,7 @@ public class KeybindOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}'",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
             return;
         }
@@ -632,7 +632,7 @@ public class DropdownOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}: Provided valueNames is null or empty!",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
         }
 
@@ -649,7 +649,7 @@ public class DropdownOption : BaseOption
             {
                 Log.LogOutput(
                     $"{this.GetType()}: Could not parse '{Name}': {e}",
-                    Log.LogLevel.Warning
+                    Log.ELevel.Warning
                 );
             }
         }
@@ -678,6 +678,16 @@ public class DropdownOption : BaseOption
         return valueNames;
     }
 
+    public void SetValueNames(string[] names)
+    {
+        this.valueNames = names;
+
+        if (this.currentValue >= names.Length)
+            this.currentValue = 0;
+
+        OnInfoUpdated?.Invoke(this);
+    }
+
     public override void SetValue(object newValue)
     {
         if (entry != null)
@@ -699,7 +709,7 @@ public class DropdownOption : BaseOption
         {
             Log.LogOutput(
                 $"{this.GetType()}.OnValueChanged: Could not parse '{Name}': {e}",
-                Log.LogLevel.Warning
+                Log.ELevel.Warning
             );
         }
     }
