@@ -456,7 +456,38 @@ public class KeybindOption : BaseOption
     public Action<KeybindOption>? OnKeybindUp;
 
     internal KeyCode[] currentValue = new KeyCode[0];
+
+    public bool IsKeyDown => listenForKeyUp;
+    public bool KeyPressedThisFrame
+    {
+        get
+        {
+            if (currentValue.Length == 0)
+                return false;
+
+            for (int e = 0; e < currentValue.Length; e++)
+                if (!Input.GetKey(currentValue[e]))
+                    return false;
+
+            return Input.GetKeyDown(currentValue[currentValue.Length - 1]);
+        }
+    }
+    public bool KeyReleasedThisFrame
+    {
+        get
+        {
+            if (keyReleasedThisFrame)
+                return true;
+
+            if (!listenForKeyUp)
+                return false;
+
+            return WasAnyKeyReleased();
+        }
+    }
     private bool listenForKeyUp;
+    private bool keyReleasedThisFrame;
+    private bool keyPressedThisFrame;
 
     public KeybindOption(MelonPreferences_Entry? entry = null, KeyCode[]? currentValue = null)
         : base(entry)
@@ -482,6 +513,8 @@ public class KeybindOption : BaseOption
             if (boxedArray != null)
                 this.currentValue = boxedArray;
         }
+
+        OnKeybindUp += new Action<KeybindOption>(OnKeyReleased);
     }
 
     public KeyCode[] GetValue()
@@ -500,6 +533,15 @@ public class KeybindOption : BaseOption
                 $"{this.GetType()}.OnValueChanged: Could not parse null value '{Name}'",
                 Log.ELevel.Warning
             ); // TODO ensure this change doesn't cause problems (no longer nullable)
+            return;
+        }
+
+        if (newValue is not KeyCode[])
+        {
+            Log.LogOutput(
+                $"KeybindOption.SetValue: Error parsing new value. Ensure it is type 'KeyCode[]'",
+                Log.ELevel.Error
+            );
             return;
         }
 
@@ -528,26 +570,19 @@ public class KeybindOption : BaseOption
         if (currentValue.Length == 0)
             return;
 
+        keyReleasedThisFrame = false;
+
         if (listenForKeyUp)
         {
-            for (int e = 0; e < currentValue.Length; e++)
+            if (WasAnyKeyReleased())
             {
-                if (Input.GetKeyUp(currentValue[e]))
-                {
-                    OnKeybindUp?.Invoke(this);
-                    listenForKeyUp = false;
-                    break;
-                }
+                OnKeybindUp?.Invoke(this);
+                listenForKeyUp = false;
+                keyReleasedThisFrame = true;
             }
         }
 
-        for (int e = 0; e < currentValue.Length; e++)
-        {
-            if (!Input.GetKey(currentValue[e]))
-                return;
-        }
-
-        if (Input.GetKeyDown(currentValue[currentValue.Length - 1]))
+        if (KeyPressedThisFrame)
         {
             OnKeybindDown?.Invoke(this);
             listenForKeyUp = true;
@@ -602,6 +637,25 @@ public class KeybindOption : BaseOption
 
         this.OnValueChangedUntyped?.Invoke(oldValue, newValue);
         this.OnValueChangedOption?.Invoke(this);
+    }
+
+    private void OnKeyReleased(KeybindOption option)
+    {
+        keyReleasedThisFrame = true;
+    }
+
+    private bool WasAnyKeyReleased()
+    {
+        if (currentValue.Length == 0)
+            return false;
+
+        for (int e = 0; e < currentValue.Length; e++)
+        {
+            if (Input.GetKeyUp(currentValue[e]))
+                return true;
+        }
+
+        return false;
     }
 }
 

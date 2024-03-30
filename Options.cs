@@ -159,6 +159,11 @@ public static class Options
             if (option != null)
                 option.OnUpdate();
     }
+
+    internal static void OnLateUpdate()
+    {
+        
+    }
 }
 
 internal class ModOptionContainer

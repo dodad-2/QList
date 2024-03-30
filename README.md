@@ -68,6 +68,12 @@ Option types are located at `QList.OptionTypes`. Currently available:
 
 # Changelog
 
+**0.3.0**
+
+- KeyBindOption: Added `IsKeyDown`
+- KeyBindOption: Added `KeyPressedThisFrame`
+- KeyBindOption: Added `KeyReleasedThisFrame`
+
 **0.2.0**
 
 - Options: User editing of options can now be toggled via `BaseOption.AllowUserEdits` and listeners are notified of this change via `BaseOption.OnAllowUserEditsUpdated`. This field does not affect `BaseOption.SetValue` and manual changes are always applied
